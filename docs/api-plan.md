@@ -1,7 +1,7 @@
 # API work list
 
 Source: [KanMind API specification](https://cdn.developerakademie.com/courses/Backend/EndpointDoku/index.html?name=kanmind), checked 2026-10-01.
-All operations below are **pending**. Paths start with `/api/` and end in `/`.
+**Registration is implemented and tested.** All other operations are pending. Paths start with `/api/` and end in `/`.
 Errors shown are the documented client errors. The specification also lists
 500 for server failures; it is not a validation response to implement deliberately.
 

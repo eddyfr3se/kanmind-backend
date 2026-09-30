@@ -1,0 +1,852 @@
+{
+  "info": {
+    "name": "KanMind registration",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Registration contract and validation checks. Run against a local test database; each run creates four test accounts."
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8001"
+    }
+  ],
+  "item": [
+    {
+      "name": "Create account",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/registration/",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fullname\": \"Registration Test\",\n  \"email\": \"{{registration_email}}\",\n  \"password\": \"School-test-284!\",\n  \"repeated_password\": \"School-test-284!\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.collectionVariables.set(\"registration_email\", \"kanmind-\" + pm.variables.replaceIn(\"{{$guid}}\") + \"@example.com\");"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+              "const responseData = pm.response.json();",
+              "pm.test(\"Exact response fields\", () => pm.expect(Object.keys(responseData).sort()).to.eql([\"email\", \"fullname\", \"token\", \"user_id\"]));",
+              "pm.test(\"Token and user ID\", () => { pm.expect(responseData.token).to.match(/^[a-f0-9]{40}$/); pm.expect(responseData.user_id).to.be.a(\"number\").above(0); });",
+              "const sent = JSON.parse(pm.variables.replaceIn(pm.request.body.raw));",
+              "pm.test(\"Name and normalized email\", () => { pm.expect(responseData.fullname).to.eql(sent.fullname.trim()); pm.expect(responseData.email).to.eql(sent.email.trim().toLowerCase()); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Duplicate email",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/registration/",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fullname\": \"Registration Test\",\n  \"email\": \"{{registration_email}}\",\n  \"password\": \"School-test-284!\",\n  \"repeated_password\": \"School-test-284!\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));",
+              "pm.test(\"No credentials in error response\", () => { const responseData = pm.response.json(); pm.expect(responseData).not.to.have.property(\"token\"); pm.expect(responseData).not.to.have.property(\"user_id\"); });",
+              "pm.test(\"Field error\", () => pm.expect(pm.response.json()).to.have.property(\"email\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Duplicate email with different case",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/registration/",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fullname\": \"Registration Test\",\n  \"email\": \"{{registration_email}}\",\n  \"password\": \"School-test-284!\",\n  \"repeated_password\": \"School-test-284!\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.variables.set(\"registration_email\", pm.collectionVariables.get(\"registration_email\").toUpperCase());"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));",
+              "pm.test(\"No credentials in error response\", () => { const responseData = pm.response.json(); pm.expect(responseData).not.to.have.property(\"token\"); pm.expect(responseData).not.to.have.property(\"user_id\"); });",
+              "pm.test(\"Field error\", () => pm.expect(pm.response.json()).to.have.property(\"email\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Missing fullname",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/registration/",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"invalid-case-{{$guid}}@example.com\",\n  \"password\": \"School-test-284!\",\n  \"repeated_password\": \"School-test-284!\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));",
+              "pm.test(\"No credentials in error response\", () => { const responseData = pm.response.json(); pm.expect(responseData).not.to.have.property(\"token\"); pm.expect(responseData).not.to.have.property(\"user_id\"); });",
+              "pm.test(\"Field error\", () => pm.expect(pm.response.json()).to.have.property(\"fullname\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Empty fullname",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/registration/",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fullname\": \"\",\n  \"email\": \"invalid-case-{{$guid}}@example.com\",\n  \"password\": \"School-test-284!\",\n  \"repeated_password\": \"School-test-284!\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));",
+              "pm.test(\"No credentials in error response\", () => { const responseData = pm.response.json(); pm.expect(responseData).not.to.have.property(\"token\"); pm.expect(responseData).not.to.have.property(\"user_id\"); });",
+              "pm.test(\"Field error\", () => pm.expect(pm.response.json()).to.have.property(\"fullname\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Null fullname",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/registration/",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fullname\": null,\n  \"email\": \"invalid-case-{{$guid}}@example.com\",\n  \"password\": \"School-test-284!\",\n  \"repeated_password\": \"School-test-284!\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));",
+              "pm.test(\"No credentials in error response\", () => { const responseData = pm.response.json(); pm.expect(responseData).not.to.have.property(\"token\"); pm.expect(responseData).not.to.have.property(\"user_id\"); });",
+              "pm.test(\"Field error\", () => pm.expect(pm.response.json()).to.have.property(\"fullname\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Missing email",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/registration/",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fullname\": \"Registration Test\",\n  \"password\": \"School-test-284!\",\n  \"repeated_password\": \"School-test-284!\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));",
+              "pm.test(\"No credentials in error response\", () => { const responseData = pm.response.json(); pm.expect(responseData).not.to.have.property(\"token\"); pm.expect(responseData).not.to.have.property(\"user_id\"); });",
+              "pm.test(\"Field error\", () => pm.expect(pm.response.json()).to.have.property(\"email\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Empty email",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/registration/",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fullname\": \"Registration Test\",\n  \"email\": \"\",\n  \"password\": \"School-test-284!\",\n  \"repeated_password\": \"School-test-284!\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));",
+              "pm.test(\"No credentials in error response\", () => { const responseData = pm.response.json(); pm.expect(responseData).not.to.have.property(\"token\"); pm.expect(responseData).not.to.have.property(\"user_id\"); });",
+              "pm.test(\"Field error\", () => pm.expect(pm.response.json()).to.have.property(\"email\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Null email",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/registration/",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fullname\": \"Registration Test\",\n  \"email\": null,\n  \"password\": \"School-test-284!\",\n  \"repeated_password\": \"School-test-284!\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));",
+              "pm.test(\"No credentials in error response\", () => { const responseData = pm.response.json(); pm.expect(responseData).not.to.have.property(\"token\"); pm.expect(responseData).not.to.have.property(\"user_id\"); });",
+              "pm.test(\"Field error\", () => pm.expect(pm.response.json()).to.have.property(\"email\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Missing password",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/registration/",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fullname\": \"Registration Test\",\n  \"email\": \"invalid-case-{{$guid}}@example.com\",\n  \"repeated_password\": \"School-test-284!\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));",
+              "pm.test(\"No credentials in error response\", () => { const responseData = pm.response.json(); pm.expect(responseData).not.to.have.property(\"token\"); pm.expect(responseData).not.to.have.property(\"user_id\"); });",
+              "pm.test(\"Field error\", () => pm.expect(pm.response.json()).to.have.property(\"password\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Empty password",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/registration/",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fullname\": \"Registration Test\",\n  \"email\": \"invalid-case-{{$guid}}@example.com\",\n  \"password\": \"\",\n  \"repeated_password\": \"School-test-284!\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));",
+              "pm.test(\"No credentials in error response\", () => { const responseData = pm.response.json(); pm.expect(responseData).not.to.have.property(\"token\"); pm.expect(responseData).not.to.have.property(\"user_id\"); });",
+              "pm.test(\"Field error\", () => pm.expect(pm.response.json()).to.have.property(\"password\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Null password",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/registration/",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fullname\": \"Registration Test\",\n  \"email\": \"invalid-case-{{$guid}}@example.com\",\n  \"password\": null,\n  \"repeated_password\": \"School-test-284!\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));",
+              "pm.test(\"No credentials in error response\", () => { const responseData = pm.response.json(); pm.expect(responseData).not.to.have.property(\"token\"); pm.expect(responseData).not.to.have.property(\"user_id\"); });",
+              "pm.test(\"Field error\", () => pm.expect(pm.response.json()).to.have.property(\"password\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Missing repeated_password",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/registration/",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fullname\": \"Registration Test\",\n  \"email\": \"invalid-case-{{$guid}}@example.com\",\n  \"password\": \"School-test-284!\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));",
+              "pm.test(\"No credentials in error response\", () => { const responseData = pm.response.json(); pm.expect(responseData).not.to.have.property(\"token\"); pm.expect(responseData).not.to.have.property(\"user_id\"); });",
+              "pm.test(\"Field error\", () => pm.expect(pm.response.json()).to.have.property(\"repeated_password\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Empty repeated_password",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/registration/",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fullname\": \"Registration Test\",\n  \"email\": \"invalid-case-{{$guid}}@example.com\",\n  \"password\": \"School-test-284!\",\n  \"repeated_password\": \"\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));",
+              "pm.test(\"No credentials in error response\", () => { const responseData = pm.response.json(); pm.expect(responseData).not.to.have.property(\"token\"); pm.expect(responseData).not.to.have.property(\"user_id\"); });",
+              "pm.test(\"Field error\", () => pm.expect(pm.response.json()).to.have.property(\"repeated_password\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Null repeated_password",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/registration/",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fullname\": \"Registration Test\",\n  \"email\": \"invalid-case-{{$guid}}@example.com\",\n  \"password\": \"School-test-284!\",\n  \"repeated_password\": null\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));",
+              "pm.test(\"No credentials in error response\", () => { const responseData = pm.response.json(); pm.expect(responseData).not.to.have.property(\"token\"); pm.expect(responseData).not.to.have.property(\"user_id\"); });",
+              "pm.test(\"Field error\", () => pm.expect(pm.response.json()).to.have.property(\"repeated_password\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Invalid email",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/registration/",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fullname\": \"Registration Test\",\n  \"email\": \"not-an-email\",\n  \"password\": \"School-test-284!\",\n  \"repeated_password\": \"School-test-284!\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));",
+              "pm.test(\"No credentials in error response\", () => { const responseData = pm.response.json(); pm.expect(responseData).not.to.have.property(\"token\"); pm.expect(responseData).not.to.have.property(\"user_id\"); });",
+              "pm.test(\"Field error\", () => pm.expect(pm.response.json()).to.have.property(\"email\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Different passwords",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/registration/",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fullname\": \"Registration Test\",\n  \"email\": \"mismatch-{{$guid}}@example.com\",\n  \"password\": \"School-test-284!\",\n  \"repeated_password\": \"different\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));",
+              "pm.test(\"No credentials in error response\", () => { const responseData = pm.response.json(); pm.expect(responseData).not.to.have.property(\"token\"); pm.expect(responseData).not.to.have.property(\"user_id\"); });",
+              "pm.test(\"Field error\", () => pm.expect(pm.response.json()).to.have.property(\"repeated_password\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Whitespace name",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/registration/",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fullname\": \"   \",\n  \"email\": \"blank-{{$guid}}@example.com\",\n  \"password\": \"School-test-284!\",\n  \"repeated_password\": \"School-test-284!\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));",
+              "pm.test(\"No credentials in error response\", () => { const responseData = pm.response.json(); pm.expect(responseData).not.to.have.property(\"token\"); pm.expect(responseData).not.to.have.property(\"user_id\"); });",
+              "pm.test(\"Field error\", () => pm.expect(pm.response.json()).to.have.property(\"fullname\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Malformed JSON",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/registration/",
+        "body": {
+          "mode": "raw",
+          "raw": "{",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));",
+              "pm.test(\"No credentials in error response\", () => { const responseData = pm.response.json(); pm.expect(responseData).not.to.have.property(\"token\"); pm.expect(responseData).not.to.have.property(\"user_id\"); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET not supported",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/registration/"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 405\", () => pm.response.to.have.status(405));",
+              "pm.test(\"No credentials in error response\", () => { const responseData = pm.response.json(); pm.expect(responseData).not.to.have.property(\"token\"); pm.expect(responseData).not.to.have.property(\"user_id\"); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Long name and email",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/registration/",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fullname\": \"Very long name Very long name Very long name Very long name Very long name Very long name Very long name Very long name Very long name Very long name Very long name Very long name Very long name Very long name Very long name Very long name Very long name Very long name Very long name Very long name \",\n  \"email\": \"{{long_email}}\",\n  \"password\": \"School-test-284!\",\n  \"repeated_password\": \"School-test-284!\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.variables.set(\"long_email\", pm.variables.replaceIn(\"{{$guid}}\") + \"@\" + \"a\".repeat(60) + \".\" + \"b\".repeat(60) + \".example.com\");"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+              "const responseData = pm.response.json();",
+              "pm.test(\"Exact response fields\", () => pm.expect(Object.keys(responseData).sort()).to.eql([\"email\", \"fullname\", \"token\", \"user_id\"]));",
+              "pm.test(\"Token and user ID\", () => { pm.expect(responseData.token).to.match(/^[a-f0-9]{40}$/); pm.expect(responseData.user_id).to.be.a(\"number\").above(0); });",
+              "const sent = JSON.parse(pm.variables.replaceIn(pm.request.body.raw));",
+              "pm.test(\"Name and normalized email\", () => { pm.expect(responseData.fullname).to.eql(sent.fullname.trim()); pm.expect(responseData.email).to.eql(sent.email.trim().toLowerCase()); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Ignore privilege fields",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/registration/",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fullname\": \"Registration Test\",\n  \"email\": \"privileges-{{$guid}}@example.com\",\n  \"password\": \"School-test-284!\",\n  \"repeated_password\": \"School-test-284!\",\n  \"is_staff\": true,\n  \"is_superuser\": true\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+              "const responseData = pm.response.json();",
+              "pm.test(\"Exact response fields\", () => pm.expect(Object.keys(responseData).sort()).to.eql([\"email\", \"fullname\", \"token\", \"user_id\"]));",
+              "pm.test(\"Token and user ID\", () => { pm.expect(responseData.token).to.match(/^[a-f0-9]{40}$/); pm.expect(responseData.user_id).to.be.a(\"number\").above(0); });",
+              "const sent = JSON.parse(pm.variables.replaceIn(pm.request.body.raw));",
+              "pm.test(\"Name and normalized email\", () => { pm.expect(responseData.fullname).to.eql(sent.fullname.trim()); pm.expect(responseData.email).to.eql(sent.email.trim().toLowerCase()); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Public registration ignores stale token",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Token invalid-old-token"
+          }
+        ],
+        "url": "{{base_url}}/api/registration/",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fullname\": \"Registration Test\",\n  \"email\": \"stale-{{$guid}}@example.com\",\n  \"password\": \"School-test-284!\",\n  \"repeated_password\": \"School-test-284!\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+              "const responseData = pm.response.json();",
+              "pm.test(\"Exact response fields\", () => pm.expect(Object.keys(responseData).sort()).to.eql([\"email\", \"fullname\", \"token\", \"user_id\"]));",
+              "pm.test(\"Token and user ID\", () => { pm.expect(responseData.token).to.match(/^[a-f0-9]{40}$/); pm.expect(responseData.user_id).to.be.a(\"number\").above(0); });",
+              "const sent = JSON.parse(pm.variables.replaceIn(pm.request.body.raw));",
+              "pm.test(\"Name and normalized email\", () => { pm.expect(responseData.fullname).to.eql(sent.fullname.trim()); pm.expect(responseData.email).to.eql(sent.email.trim().toLowerCase()); });"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

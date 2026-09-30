@@ -1,12 +1,12 @@
 # Data model plan
 
-This is the initial plan. These models have not been implemented or migrated.
+The user model is implemented and migrated. Board, Task and Comment remain planned.
 SQLite is used locally. `auth_app` handles accounts; `kanban_app` handles the
 three project entities below.
 
 | Entity | Planned fields and relationships |
 | --- | --- |
-| User | Start from Django's standard User. The API needs email, fullname and a securely hashed password. |
+| User | auth_app.User extends AbstractUser with unique email, fullname and a 254-character username. Password hashing and permissions are inherited. |
 | Board | id, title, owner (User), members (many-to-many User) |
 | Task | id, board, creator (User), title, description, status, priority, assignee (nullable User), reviewer (nullable User), due_date |
 | Comment | id, task, author (User), content, created_at |
@@ -20,15 +20,34 @@ Counts are computed from related objects rather than stored in extra fields.
 Task status is one of `to-do`, `in-progress`, `review`, `done`; priority is
 `low`, `medium`, or `high`.
 
-## Account decision before migrations
+## Account decision
 
-Prefer the standard Django User unless there is a concrete reason for a custom
-model. Before registration is implemented, settle how `fullname` is stored and
-how email login maps to a unique account. The default email field is not unique;
-username and name fields also have length limits. Do not silently shorten names
-or reject valid email addresses because of an internal mapping. A related profile
-is an option for fullname. No database migrations have been applied yet, so the
-choice can still be made without converting existing user data.
+`auth_app.User` inherits from Django's `AbstractUser`. This small extension
+provides database uniqueness for email and stores fullname without splitting
+or truncating it. The unchanged Django User does not provide these fields
+in this form. A separate profile would add a second table for account data.
+
+For API registrations, username is the normalized email as well. Its length
+is 254 to avoid imposing the standard username limit of 150 on email
+addresses. This keeps Django's existing manager and password methods usable.
+The forthcoming API login must look up normalized email, then authenticate
+with the stored username; admin-created usernames can differ from email.
+
+The serializer lowercases email and checks existing addresses with `iexact`.
+Database uniqueness also rejects simultaneous API registrations of the same
+normalized address. Admin users should use lowercase email addresses; direct
+admin edits do not apply the API serializer's normalization.
+
+`fullname` uses a TextField because the contract specifies no maximum length.
+Blank and null names are rejected. Registration fields are explicitly listed,
+so clients cannot set staff status, superuser status or groups.
+
+`create_user()` hashes the password. A database transaction saves the account
+and its token together, rolling both back if creation fails. The transaction
+exists to avoid half-finished registrations.
+
+References: [Django user customization](https://docs.djangoproject.com/en/5.2/topics/auth/customizing/)
+and [transactions](https://docs.djangoproject.com/en/5.2/topics/db/transactions/).
 
 ## Access rules
 
