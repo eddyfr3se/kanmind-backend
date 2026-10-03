@@ -22,10 +22,19 @@ requests saved in the `KanMind` collection:
 - Invalid email address.
 - Missing required fields.
 
-Login and the remaining API endpoints are not implemented yet.
+Login is implemented at `POST /api/login/`. It accepts `email` and `password`
+and returns HTTP 200 with `token`, `fullname`, `email`, and `user_id`.
+The following login cases were manually checked in Postman and their requests
+saved in the `KanMind` collection:
+
+- Correct credentials: HTTP 200 with the expected response fields.
+- Wrong password: HTTP 400 with an invalid credentials error.
+- Missing email and password: HTTP 400 with required field errors.
+
+Email lookup and the remaining API endpoints are not implemented yet.
 The provided frontend has not been connected yet.
 
-The next stage is day 3: login, authenticated email lookup, and the first
+Day 3 is in progress. The next steps are authenticated email lookup and the first
 frontend connection. Further changes will be committed in small, tested steps.
 
 ## Installation
@@ -86,14 +95,17 @@ Stop the server with Control+C.
 
 ## Testing and limitations
 
-Start the backend and run the saved registration requests in Postman.
+Start the backend and run the saved registration and login requests in Postman.
 Successful registration returns 201; the four invalid cases listed above
 return 400. Use a new email address for each successful registration test.
+For login, use an existing registered test user. Correct credentials return 200;
+the wrong password and missing required field cases return 400.
 The current Postman requests are saved in the local workspace collection;
 an updated collection export is not yet included in this repository.
 The earlier automated tests were removed during the rebuild. The official
 Academy Postman suite has not been run against this version.
 
-This is a local development setup with `DEBUG = True`. Login, board, task,
+This is a local development setup with `DEBUG = True`. Email lookup, board, task,
 and comment endpoints are still pending. Global API authentication uses
-`Authorization: Token <token>`; registration allows unauthenticated requests.
+`Authorization: Token <token>`; registration and login allow unauthenticated
+requests.

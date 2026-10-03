@@ -1,5 +1,6 @@
 from uuid import uuid4
 
+from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
@@ -52,3 +53,24 @@ class RegistrationSerializer(serializers.ModelSerializer):
             fullname=fullname,
         )
         return user
+
+
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(
+        write_only=True,
+        trim_whitespace=False,
+    )
+
+    def validate(self, attrs):
+        account = User.objects.filter(email__iexact=attrs["email"]).first()
+        if account is None:
+            raise serializers.ValidationError("Invalid email or password.")
+        user = authenticate(
+            username=account.username,
+            password=attrs["password"],
+        )
+        if user is None:
+            raise serializers.ValidationError("Invalid email or password.")
+        attrs["user"] = user
+        return attrs
