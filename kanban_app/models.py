@@ -1,1 +1,3 @@
-"""Models for boards, tasks and comments."""
+from django.db import models
+
+# Create your models here.

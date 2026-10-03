@@ -1,1 +1,3 @@
-"""Admin for boards, tasks and comments."""
+from django.contrib import admin
+
+# Register your models here.

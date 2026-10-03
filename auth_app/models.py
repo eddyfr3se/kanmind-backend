@@ -1,14 +1,14 @@
-"""User information required by the KanMind API."""
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import User
 from django.db import models
 
 
-class User(AbstractUser):
-    """Keep Django authentication and add the API account fields."""
-
-    username = models.CharField(max_length=254, unique=True)
-    email = models.EmailField(unique=True)
+class UserProfile(models.Model):
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="profile",
+    )
     fullname = models.TextField()
 
     def __str__(self):
-        return self.fullname or self.username
+        return self.fullname
