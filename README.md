@@ -31,11 +31,23 @@ saved in the `KanMind` collection:
 - Wrong password: HTTP 400 with an invalid credentials error.
 - Missing email and password: HTTP 400 with required field errors.
 
-Email lookup and the remaining API endpoints are not implemented yet.
+Email lookup is implemented at `GET /api/email-check/?email=...` and requires
+token authentication. A matching user returns HTTP 200 with `id`, `email`,
+and `fullname`. The following cases were manually checked in Postman and their
+requests saved in the `KanMind` collection:
+
+- Existing email with a valid token: HTTP 200 with the expected response fields.
+- Unknown email with a valid token: HTTP 404.
+- Invalid email with a valid token: HTTP 400.
+- Missing email with a valid token: HTTP 400.
+- Missing authentication: HTTP 401.
+- Invalid token: HTTP 401.
+
+Board, task, and comment endpoints are not implemented yet.
 The provided frontend has not been connected yet.
 
-Day 3 is in progress. The next steps are authenticated email lookup and the first
-frontend connection. Further changes will be committed in small, tested steps.
+Day 3 is in progress. The next step is the first frontend connection for
+registration and login. Further changes will be committed in small, tested steps.
 
 ## Installation
 
@@ -95,17 +107,21 @@ Stop the server with Control+C.
 
 ## Testing and limitations
 
-Start the backend and run the saved registration and login requests in Postman.
+Start the backend and run the saved registration, login, and email lookup
+requests in Postman.
 Successful registration returns 201; the four invalid cases listed above
 return 400. Use a new email address for each successful registration test.
 For login, use an existing registered test user. Correct credentials return 200;
 the wrong password and missing required field cases return 400.
+For email lookup, send `Authorization: Token <token>` from a successful login
+and use the `email` query parameter. The six cases and expected status codes
+are listed above.
 The current Postman requests are saved in the local workspace collection;
 an updated collection export is not yet included in this repository.
 The earlier automated tests were removed during the rebuild. The official
 Academy Postman suite has not been run against this version.
 
-This is a local development setup with `DEBUG = True`. Email lookup, board, task,
+This is a local development setup with `DEBUG = True`. Board, task,
 and comment endpoints are still pending. Global API authentication uses
 `Authorization: Token <token>`; registration and login allow unauthenticated
 requests.
