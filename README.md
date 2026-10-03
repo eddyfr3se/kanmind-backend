@@ -44,10 +44,13 @@ requests saved in the `KanMind` collection:
 - Invalid token: HTTP 401.
 
 Board, task, and comment endpoints are not implemented yet.
-The provided frontend has not been connected yet.
+The provided frontend is connected to the local backend. Login was checked
+through the frontend. After a registration test in Safari, the dashboard
+displayed the entered full name and an authenticated session.
 
-Day 3 is in progress. The next step is the first frontend connection for
-registration and login. Further changes will be committed in small, tested steps.
+Day 3 is complete: login, token authentication, email lookup, and the first
+frontend connection for registration and login are in place. Day 4 starts with
+the board model, migrations, admin configuration, creation, and listing.
 
 ## Installation
 
@@ -105,6 +108,34 @@ Admin login page: http://127.0.0.1:8001/admin/login/
 
 Stop the server with Control+C.
 
+## Connecting the separate frontend
+
+Use the [provided Academy frontend](https://github.com/Developer-Akademie-Backendkurs/project.KanMind)
+in a separate directory outside this backend repository. Keep its license and
+origin notices. To clone it alongside the backend, run from the backend directory:
+
+```bash
+git clone https://github.com/Developer-Akademie-Backendkurs/project.KanMind.git ../KanMind_Frontend
+```
+
+If the frontend is already cloned, use that directory. In its
+`shared/js/config.js`, set the API base URL to match the backend port:
+
+```javascript
+const API_BASE_URL = 'http://127.0.0.1:8001/api/';
+```
+
+Keep the Django server running in its terminal. Open the frontend's root
+`index.html` with Live Server in the editor. The tested frontend address is
+http://127.0.0.1:5500/pages/auth/login.html.
+The backend's `CORS_ALLOWED_ORIGINS` must allow the frontend's actual origin,
+including its hostname and port.
+
+Register a local test user with a new email address, then use that user's
+credentials for login. The frontend sends the returned token in
+`Authorization: Token <token>` for protected requests. Its preset guest
+credentials do not automatically create a local backend user.
+
 ## Testing and limitations
 
 Start the backend and run the saved registration, login, and email lookup
@@ -120,6 +151,11 @@ The current Postman requests are saved in the local workspace collection;
 an updated collection export is not yet included in this repository.
 The earlier automated tests were removed during the rebuild. The official
 Academy Postman suite has not been run against this version.
+
+The first frontend checks covered login and registration leading to the
+dashboard. These checks do not verify the pending board, task, or comment
+operations. Empty dashboard sections are expected at this stage; the complete
+frontend workflow still needs to be tested after those endpoints are implemented.
 
 This is a local development setup with `DEBUG = True`. Board, task,
 and comment endpoints are still pending. Global API authentication uses
