@@ -43,14 +43,15 @@ requests saved in the `KanMind` collection:
 - Missing authentication: HTTP 401.
 - Invalid token: HTTP 401.
 
-Board, task, and comment endpoints are not implemented yet.
+Board creation and listing are implemented at `/api/boards/`.
+Board detail, update, and delete endpoints, plus task and comment endpoints,
+are not implemented yet.
 The provided frontend is connected to the local backend. Login was checked
 through the frontend. After a registration test in Safari, the dashboard
 displayed the entered full name and an authenticated session.
 
 Day 3 is complete: login, token authentication, email lookup, and the first
-frontend connection for registration and login are in place. Day 4 starts with
-the board model, migrations, admin configuration, creation, and listing.
+frontend connection for registration and login are in place.
 
 ### Day 4 progress
 
@@ -63,7 +64,36 @@ serializer accepts `title` and `members`; the list serializer provides `id`,
 Django's system check passed, and the list serializer was checked against the
 saved test board. Member counts use the board's actual membership. Task counts
 temporarily default to zero until the Task model and counting logic are added.
-Board API views, routing, and Postman tests are still pending.
+
+`POST /api/boards/` creates a board and returns its short representation with
+HTTP 201. The authenticated user becomes the owner, independently of any
+owner fields supplied in the request. Ownership does not automatically add
+the user to the members list.
+
+`GET /api/boards/` returns HTTP 200 with only boards owned by or shared with
+the authenticated user. A board appears once even when both conditions apply.
+Both operations require token authentication.
+
+Eleven board requests were manually executed through the Postman desktop app
+and saved in the `KanMind` collection:
+
+- Create a board with members: HTTP 201 and all seven response fields.
+- Create a board with an empty members list: HTTP 201, member count zero,
+  and the authenticated user as owner despite supplied foreign owner IDs.
+- List boards as owner: HTTP 200, including ownership without membership,
+  excluding a foreign board, and no duplicate for an owner who is also a member.
+- List boards as member: HTTP 200 with the shared board, excluding other boards.
+- Create with an empty title: HTTP 400.
+- Create with a missing title: HTTP 400.
+- Create with an unknown member ID: HTTP 400.
+- List without a token: HTTP 401.
+- List with an invalid token: HTTP 401.
+- Create without a token: HTTP 401.
+- Create with an invalid token: HTTP 401.
+
+Day 4 board setup, creation, and listing are implemented and manually checked.
+Actual task counting and tests with nonzero task counts remain pending.
+Day 5 covers board details, updates, and deletion with their permissions.
 
 ## Installation
 
@@ -151,7 +181,7 @@ credentials do not automatically create a local backend user.
 
 ## Testing and limitations
 
-Start the backend and run the saved registration, login, and email lookup
+Start the backend and run the saved registration, login, email lookup, and board
 requests in Postman.
 Successful registration returns 201; the four invalid cases listed above
 return 400. Use a new email address for each successful registration test.
@@ -160,17 +190,21 @@ the wrong password and missing required field cases return 400.
 For email lookup, send `Authorization: Token <token>` from a successful login
 and use the `email` query parameter. The six cases and expected status codes
 are listed above.
+For boards, use separate owner and member test users and send their login
+tokens. Successful POST requests create new local test boards on each run.
+The eleven saved board requests and expected results are listed above.
 The current Postman requests are saved in the local workspace collection;
 an updated collection export is not yet included in this repository.
 The earlier automated tests were removed during the rebuild. The official
 Academy Postman suite has not been run against this version.
 
 The first frontend checks covered login and registration leading to the
-dashboard. These checks do not verify the pending board, task, or comment
-operations. Empty dashboard sections are expected at this stage; the complete
-frontend workflow still needs to be tested after those endpoints are implemented.
+dashboard. Board creation and listing have been checked directly in Postman;
+their frontend workflow has not been tested yet. The complete frontend
+workflow still needs to be tested after the remaining endpoints are implemented.
 
-This is a local development setup with `DEBUG = True`. Board, task,
-and comment endpoints are still pending. Global API authentication uses
+This is a local development setup with `DEBUG = True`. Board detail, update,
+and delete operations, task operations, and comment operations are still pending.
+Task counts currently default to zero. Global API authentication uses
 `Authorization: Token <token>`; registration and login allow unauthenticated
 requests.
