@@ -1,3 +1,6 @@
 from django.contrib import admin
 
-# Register your models here.
+from kanban_app.models import Board
+
+
+admin.site.register(Board)

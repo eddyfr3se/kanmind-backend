@@ -52,6 +52,19 @@ Day 3 is complete: login, token authentication, email lookup, and the first
 frontend connection for registration and login are in place. Day 4 starts with
 the board model, migrations, admin configuration, creation, and listing.
 
+### Day 4 progress
+
+The Board model, initial migration, and admin registration are in place.
+A board was created successfully through the admin interface. The input
+serializer accepts `title` and `members`; the list serializer provides `id`,
+`title`, `member_count`, `ticket_count`, `tasks_to_do_count`,
+`tasks_high_prio_count`, and `owner_id`.
+
+Django's system check passed, and the list serializer was checked against the
+saved test board. Member counts use the board's actual membership. Task counts
+temporarily default to zero until the Task model and counting logic are added.
+Board API views, routing, and Postman tests are still pending.
+
 ## Installation
 
 The local setup uses Python 3.14, Django, Django REST Framework,
