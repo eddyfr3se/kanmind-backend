@@ -8,6 +8,7 @@ from kanban_app.api.serializers import (
     BoardCreateSerializer,
     BoardDetailSerializer,
     BoardListSerializer,
+    BoardUpdateResponseSerializer,
 )
 from kanban_app.models import Board
 
@@ -37,10 +38,25 @@ class BoardListCreateView(generics.ListCreateAPIView):
         )
 
 
-class BoardDetailView(generics.RetrieveAPIView):
+class BoardDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Board.objects.all()
-    serializer_class = BoardDetailSerializer
+    http_method_names = ["get", "patch", "delete", "head", "options"]
     permission_classes = [
         IsAuthenticated,
         IsBoardOwnerOrMember,
     ]
+
+    def get_serializer_class(self):
+        if self.request.method == "PATCH":
+            return BoardCreateSerializer
+        return BoardDetailSerializer
+
+    def update(self, request, *args, **kwargs):
+        board = self.get_object()
+        serializer = self.get_serializer(
+            board, data=request.data, partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        response_serializer = BoardUpdateResponseSerializer(board)
+        return Response(response_serializer.data)

@@ -44,9 +44,8 @@ requests saved in the `KanMind` collection:
 - Invalid token: HTTP 401.
 
 Board creation and listing are implemented at `/api/boards/`.
-Board retrieval is implemented at `GET /api/boards/{board_id}/`.
-Board update and delete endpoints, plus task and comment endpoints,
-are not implemented yet.
+Board retrieval, partial updates, and deletion are implemented at
+`/api/boards/{board_id}/`. Task and comment endpoints are not implemented yet.
 The provided frontend is connected to the local backend. Login was checked
 through the frontend. After a registration test in Safari, the dashboard
 displayed the entered full name and an authenticated session.
@@ -113,7 +112,52 @@ app and saved in the `KanMind` collection:
 - Request with an invalid token: HTTP 401.
 - Request for a nonexistent board with a valid token: HTTP 404.
 
-Board PATCH and DELETE operations and their tests remain pending.
+`PATCH /api/boards/{board_id}/` allows owners and members to change the title
+and replace the members list. Omitted fields stay unchanged. It returns HTTP
+200 with `id`, `title`, `owner_data`, and `members_data`; each user object
+contains `id`, `email`, and `fullname`. Ownership and tasks are not writable
+through this endpoint. PUT is not enabled.
+
+Twelve update cases were manually executed through the Postman desktop app
+and their requests saved in the `KanMind` collection:
+
+- Owner changes only the title: HTTP 200; membership stays unchanged.
+- Owner replaces members: HTTP 200; the previous selection is replaced.
+- Member changes the title: HTTP 200.
+- Member replaces members: HTTP 200.
+- Owner sends an empty members list: HTTP 200; all members are removed.
+- Empty title: HTTP 400 with a title validation error.
+- Unknown member ID: HTTP 400 with a members validation error.
+- Authenticated outsider updates an existing foreign board: HTTP 403.
+- Missing token: HTTP 401.
+- Invalid token: HTTP 401.
+- Nonexistent board with a valid token: HTTP 404.
+- PUT with a valid owner token: HTTP 405; the board stays unchanged.
+
+Follow-up GET requests confirmed membership replacement, the empty members
+list, and unchanged board data after rejected requests.
+
+`DELETE /api/boards/{board_id}/` allows only the owner to delete. Six deletion
+cases were manually executed through the Postman desktop app and their
+requests saved in the `KanMind` collection:
+
+- Owner deletes a separately created disposable test board: HTTP 204 with
+  an empty response body. A subsequent owner GET returned HTTP 404.
+- Member attempts deletion: HTTP 403; a subsequent owner GET returned 200.
+- Authenticated outsider attempts deletion: HTTP 403; a subsequent owner GET
+  returned 200.
+- Missing token: HTTP 401 with a missing credentials error.
+- Invalid token: HTTP 401 with an invalid token error.
+- Nonexistent board with a valid token: HTTP 404.
+
+For the member deletion test, membership was restored first and confirmed
+in the response. The successful owner deletion used a board with no members,
+confirming that ownership alone grants the deletion right.
+
+Board details, PATCH, and DELETE are implemented and manually checked for
+Day 5. Task integration and cascade deletion of tasks and comments remain
+follow-up work once those models exist. These manual checks do not establish
+an official Academy test coverage result.
 
 ## Development diary
 
@@ -170,32 +214,26 @@ describe the rebuilt implementation; the earlier repository history is retained.
   and `1901793` (creation and listing API).
 - Remaining follow-up: real task counts and the board frontend workflow.
 
-### Day 5 - In progress
+### Day 5 - Board details, updates, and deletion
 
-Completed so far:
-
-- Added a member serializer with `id`, `email`, and the profile's full name.
-- Added a board detail serializer with nested members and an empty task list
-  until the Task model is implemented.
-- Django's system check passed. A local serializer check confirmed the five
-  board detail fields and the temporary empty task list.
-- Connected the detail serializer to a RetrieveAPIView and board ID route.
-- Added an object permission allowing the board owner or a member to read.
-- Manually executed and saved six detail requests in the Postman desktop app:
-  owner and member access (200), outsider access (403), missing and invalid
-  tokens (401), and a nonexistent board (404).
-- Checked that all six requests were saved with their intended URLs.
-
-Remaining work:
-
-- Implement partial updates for the title and replacement of the members list.
-- Allow owners and members to update; allow only owners to delete.
-- Check responses, permissions, validation, missing objects, and empty HTTP 204
-  responses through the Postman desktop app.
-- Update this diary with actual results, update the README status, and commit
-  and push completed, checked work.
-- Integrate actual tasks into board details on Day 6. Cascade checks involving
-  tasks and comments must wait until those models exist.
+- Added nested member data and the documented board detail response.
+- Connected the board ID route to a RetrieveUpdateDestroyAPIView, enabling
+  GET, PATCH, and DELETE while excluding PUT.
+- Reused the input ModelSerializer for partial title and membership updates;
+  added a separate serializer for `owner_data` and `members_data` responses.
+- Allowed owners and members to read and update, but only owners to delete,
+  using an object permission. Kept missing objects distinct from denied access.
+- Manually executed and saved six detail, twelve update, and six deletion
+  cases in the Postman desktop app. Expected status codes and checked behavior
+  are recorded in the Day 5 progress section above.
+- Confirmed persisted membership changes with GET requests and verified that
+  forbidden member and outsider deletion attempts left the boards intact.
+- Created a disposable board, deleted it as its owner, checked the empty
+  HTTP 204 response, and confirmed its absence with a subsequent HTTP 404 GET.
+- Updated the README and this diary with the implemented behavior and actual
+  manual test results.
+- Remaining follow-up: integrate tasks on Day 6, check cascading task/comment
+  deletion after both models exist, and test the full board frontend workflow.
 
 ## Installation
 
@@ -294,21 +332,25 @@ and use the `email` query parameter. The six cases and expected status codes
 are listed above.
 For boards, use separate owner and member test users and send their login
 tokens. Successful POST requests create new local test boards on each run.
-The eleven creation/listing requests and six detail requests, including their
-expected results, are listed above. For an outsider check, use a valid token
-belonging to a user who neither owns nor belongs to the requested board.
+The eleven creation/listing, six detail, twelve update, and six deletion
+requests and their expected results are listed above. Before a member test,
+ensure the test user is currently a member: replacing members with an empty
+list removes that role. Create a fresh disposable board for each successful
+owner deletion test, use its returned ID, and confirm its absence with GET.
+For an outsider check, use a valid token belonging to a user who neither owns nor belongs to the requested board.
 The current Postman requests are saved in the local workspace collection;
 an updated collection export is not yet included in this repository.
 The earlier automated tests were removed during the rebuild. The official
 Academy Postman suite has not been run against this version.
 
 The first frontend checks covered login and registration leading to the
-dashboard. Board creation, listing, and retrieval have been checked in Postman;
-their frontend workflow has not been tested yet. The complete frontend
+dashboard. Board creation, listing, retrieval, updates, and deletion were
+checked in Postman; their frontend workflow has not been tested yet. The complete frontend
 workflow still needs to be tested after the remaining endpoints are implemented.
 
-This is a local development setup with `DEBUG = True`. Board update and delete
-operations, task operations, and comment operations are still pending.
+This is a local development setup with `DEBUG = True`. Task and comment
+operations are still pending. Cascade deletion involving tasks and comments
+has not been tested because those models do not exist yet.
 Board detail task lists are temporarily empty until tasks are implemented.
 Task counts currently default to zero. Global API authentication uses
 `Authorization: Token <token>`; registration and login allow unauthenticated

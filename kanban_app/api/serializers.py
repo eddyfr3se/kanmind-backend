@@ -54,3 +54,16 @@ class BoardDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Board
         fields = ["id", "title", "owner_id", "members", "tasks"]
+
+
+class BoardUpdateResponseSerializer(serializers.ModelSerializer):
+    owner_data = BoardMemberSerializer(source="owner", read_only=True)
+    members_data = BoardMemberSerializer(
+        source="members",
+        many=True,
+        read_only=True,
+    )
+
+    class Meta:
+        model = Board
+        fields = ["id", "title", "owner_data", "members_data"]
