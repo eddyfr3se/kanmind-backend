@@ -3,8 +3,10 @@ from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from kanban_app.api.permissions import IsBoardOwnerOrMember
 from kanban_app.api.serializers import (
     BoardCreateSerializer,
+    BoardDetailSerializer,
     BoardListSerializer,
 )
 from kanban_app.models import Board
@@ -33,3 +35,12 @@ class BoardListCreateView(generics.ListCreateAPIView):
             response_serializer.data,
             status=status.HTTP_201_CREATED,
         )
+
+
+class BoardDetailView(generics.RetrieveAPIView):
+    queryset = Board.objects.all()
+    serializer_class = BoardDetailSerializer
+    permission_classes = [
+        IsAuthenticated,
+        IsBoardOwnerOrMember,
+    ]

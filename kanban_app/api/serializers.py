@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from rest_framework import serializers
 
 from kanban_app.models import Board
@@ -31,3 +32,25 @@ class BoardListSerializer(serializers.ModelSerializer):
 
     def get_member_count(self, obj):
         return obj.members.count()
+
+
+class BoardMemberSerializer(serializers.ModelSerializer):
+    fullname = serializers.CharField(
+        source="profile.fullname",
+        read_only=True,
+    )
+
+    class Meta:
+        model = User
+        fields = ["id", "email", "fullname"]
+
+
+class BoardDetailSerializer(serializers.ModelSerializer):
+    owner_id = serializers.IntegerField(read_only=True)
+    members = BoardMemberSerializer(many=True, read_only=True)
+    # Actual tasks will be included when the Task model is implemented.
+    tasks = serializers.ListField(read_only=True, default=list)
+
+    class Meta:
+        model = Board
+        fields = ["id", "title", "owner_id", "members", "tasks"]
