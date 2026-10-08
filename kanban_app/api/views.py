@@ -1,5 +1,7 @@
 from django.db.models import Q
-from rest_framework import generics, status
+from django.shortcuts import get_object_or_404
+from rest_framework import generics, serializers, status
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -9,6 +11,8 @@ from kanban_app.api.serializers import (
     BoardDetailSerializer,
     BoardListSerializer,
     BoardUpdateResponseSerializer,
+    TaskCreateSerializer,
+    TaskSerializer,
 )
 from kanban_app.models import Board
 
@@ -60,3 +64,26 @@ class BoardDetailView(generics.RetrieveUpdateDestroyAPIView):
         self.perform_update(serializer)
         response_serializer = BoardUpdateResponseSerializer(board)
         return Response(response_serializer.data)
+
+
+class TaskCreateView(generics.CreateAPIView):
+    serializer_class = TaskCreateSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_board(self):
+        board_id = serializers.IntegerField(min_value=1).run_validation(
+            self.request.data.get("board")
+        )
+        return get_object_or_404(Board, pk=board_id)
+
+    def create(self, request, *args, **kwargs):
+        board = self.get_board()
+        if not board.members.filter(id=request.user.id).exists():
+            raise PermissionDenied("You must be a member of the board.")
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        task = serializer.save(creator=request.user)
+        return Response(
+            TaskSerializer(task).data,
+            status=status.HTTP_201_CREATED,
+        )

@@ -45,7 +45,8 @@ requests saved in the `KanMind` collection:
 
 Board creation and listing are implemented at `/api/boards/`.
 Board retrieval, partial updates, and deletion are implemented at
-`/api/boards/{board_id}/`. Task and comment endpoints are not implemented yet.
+`/api/boards/{board_id}/`. Task creation is implemented at `POST /api/tasks/`.
+Task updates, deletion, personal lists, and comment endpoints remain pending.
 The provided frontend is connected to the local backend. Login was checked
 through the frontend. After a registration test in Safari, the dashboard
 displayed the entered full name and an authenticated session.
@@ -100,7 +101,7 @@ Day 5 covers board details, updates, and deletion with their permissions.
 `GET /api/boards/{board_id}/` requires token authentication and allows the
 board owner or a member to retrieve the board. It returns `id`, `title`,
 `owner_id`, `members`, and `tasks`. Each member contains `id`, `email`, and
-`fullname`. The task list is temporarily empty until the Task model is added.
+`fullname`. Since Day 6, `tasks` contains the board's actual tasks.
 
 Six board detail requests were manually executed through the Postman desktop
 app and saved in the `KanMind` collection:
@@ -158,6 +159,47 @@ Board details, PATCH, and DELETE are implemented and manually checked for
 Day 5. Task integration and cascade deletion of tasks and comments remain
 follow-up work once those models exist. These manual checks do not establish
 an official Academy test coverage result.
+
+### Day 6 progress
+
+The Task model, migration, and admin registration are in place. Tasks belong
+to a board and retain their creator. Status and priority use explicit choices;
+assignee and reviewer are optional user relationships. The authenticated user
+is saved as the creator by the view.
+
+`POST /api/tasks/` requires board membership. Ownership without membership
+does not grant permission to create tasks. Assignees and reviewers must be
+members of the same board. Successful creation returns HTTP 201 with `id`,
+`board`, `title`, `description`, `status`, `priority`, `assignee`, `reviewer`,
+`due_date`, and `comments_count`. Assigned users contain `id`, `email`, and
+`fullname`; unassigned roles return null.
+
+Twenty-four task requests were manually executed in the Postman desktop app
+and saved in the local `KanMind` collection:
+
+- Four successful cases: no assignments, both assignments, explicit null
+  assignments, and reviewer only with omitted description (HTTP 201).
+- Board-foreign assignee or reviewer, unknown assignee or reviewer, invalid
+  status or priority, empty title, invalid date, missing board, missing required
+  fields, and a noninteger board value (HTTP 400).
+- Missing or invalid token (HTTP 401).
+- An outsider and an owner without membership (HTTP 403).
+- An unknown board (HTTP 404).
+- GET, PUT, PATCH, and DELETE on `/api/tasks/` (HTTP 405).
+
+Board details now use the nested TaskSerializer. Seven detail cases were
+checked in Postman: owner and member access to a board with tasks (200),
+an empty task list on another board (200), outsider access (403), missing
+and invalid tokens (401), and an unknown board (404). Returned tasks included
+nested assignments, null roles, dates, statuses, priorities, and the current
+zero comment counts. An initial HTTP 500 caused by the old ListField
+placeholder was corrected; the affected requests were repeated successfully.
+
+Day 6 task creation and board detail integration are implemented and manually
+checked. Board counters still use temporary zero values. Comment counting,
+task updates, deletion, personal lists, cascade checks, and the complete
+frontend workflow remain later stages. These checks are not an official
+Academy test coverage result.
 
 ## Development diary
 
@@ -234,6 +276,23 @@ describe the rebuilt implementation; the earlier repository history is retained.
   manual test results.
 - Remaining follow-up: integrate tasks on Day 6, check cascading task/comment
   deletion after both models exist, and test the full board frontend workflow.
+
+### Day 6 - Task creation and board detail integration
+
+- Added the Task model with board, creator, optional assignee and reviewer,
+  title, description, status, priority, and due date.
+- Created and applied migration `0002_task` and registered Task in admin.
+- Added separate input and response serializers with membership validation
+  for assignments and nested user data in responses.
+- Implemented authenticated task creation, requiring board membership and
+  saving the creator from the current user.
+- Replaced the board detail task placeholder with a nested TaskSerializer.
+- Manually checked and saved 24 task requests through the Postman desktop
+  app and checked seven board detail cases after integration.
+- Corrected the old task ListField placeholder after a 500 response and
+  repeated the affected Postman requests successfully.
+- Remaining follow-up: task PATCH and DELETE on Day 7, personal lists and
+  actual board counters on Day 8, and comments on Day 9.
 
 ## Installation
 
@@ -321,8 +380,8 @@ credentials do not automatically create a local backend user.
 
 ## Testing and limitations
 
-Start the backend and run the saved registration, login, email lookup, and board
-requests in Postman.
+Start the backend and run the saved registration, login, email lookup, board,
+and task requests in Postman.
 Successful registration returns 201; the four invalid cases listed above
 return 400. Use a new email address for each successful registration test.
 For login, use an existing registered test user. Correct credentials return 200;
@@ -338,6 +397,9 @@ ensure the test user is currently a member: replacing members with an empty
 list removes that role. Create a fresh disposable board for each successful
 owner deletion test, use its returned ID, and confirm its absence with GET.
 For an outsider check, use a valid token belonging to a user who neither owns nor belongs to the requested board.
+For task creation, use a board member token and member IDs for assignments.
+Successful POST requests create additional local tasks; update board and user
+IDs to match your local database. The Day 6 section lists the tested cases.
 The current Postman requests are saved in the local workspace collection;
 an updated collection export is not yet included in this repository.
 The earlier automated tests were removed during the rebuild. The official
@@ -348,10 +410,11 @@ dashboard. Board creation, listing, retrieval, updates, and deletion were
 checked in Postman; their frontend workflow has not been tested yet. The complete frontend
 workflow still needs to be tested after the remaining endpoints are implemented.
 
-This is a local development setup with `DEBUG = True`. Task and comment
-operations are still pending. Cascade deletion involving tasks and comments
-has not been tested because those models do not exist yet.
-Board detail task lists are temporarily empty until tasks are implemented.
-Task counts currently default to zero. Global API authentication uses
+This is a local development setup with `DEBUG = True`. Task creation and
+board detail task lists are implemented. Task PATCH, DELETE, personal lists,
+and comment operations remain pending. Cascade deletion involving tasks and
+comments has not been tested; the Comment model is not implemented yet.
+Board task counts and task comment counts currently default to zero.
+Global API authentication uses
 `Authorization: Token <token>`; registration and login allow unauthenticated
 requests.
