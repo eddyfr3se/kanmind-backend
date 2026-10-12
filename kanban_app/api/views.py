@@ -5,7 +5,10 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from kanban_app.api.permissions import IsBoardOwnerOrMember
+from kanban_app.api.permissions import (
+    CanEditOrDeleteTask,
+    IsBoardOwnerOrMember,
+)
 from kanban_app.api.serializers import (
     BoardCreateSerializer,
     BoardDetailSerializer,
@@ -13,8 +16,10 @@ from kanban_app.api.serializers import (
     BoardUpdateResponseSerializer,
     TaskCreateSerializer,
     TaskSerializer,
+    TaskUpdateResponseSerializer,
+    TaskUpdateSerializer,
 )
-from kanban_app.models import Board
+from kanban_app.models import Board, Task
 
 
 class BoardListCreateView(generics.ListCreateAPIView):
@@ -87,3 +92,20 @@ class TaskCreateView(generics.CreateAPIView):
             TaskSerializer(task).data,
             status=status.HTTP_201_CREATED,
         )
+
+
+class TaskUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Task.objects.all()
+    serializer_class = TaskUpdateSerializer
+    permission_classes = [IsAuthenticated, CanEditOrDeleteTask]
+    http_method_names = ["patch", "delete", "options"]
+
+    def update(self, request, *args, **kwargs):
+        task = self.get_object()
+        serializer = self.get_serializer(
+            task, data=request.data, partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        response_serializer = TaskUpdateResponseSerializer(task)
+        return Response(response_serializer.data)

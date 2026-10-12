@@ -46,7 +46,8 @@ requests saved in the `KanMind` collection:
 Board creation and listing are implemented at `/api/boards/`.
 Board retrieval, partial updates, and deletion are implemented at
 `/api/boards/{board_id}/`. Task creation is implemented at `POST /api/tasks/`.
-Task updates, deletion, personal lists, and comment endpoints remain pending.
+Task updates and deletion are implemented at `/api/tasks/{task_id}/`.
+Personal task lists and comment endpoints remain pending.
 The provided frontend is connected to the local backend. Login was checked
 through the frontend. After a registration test in Safari, the dashboard
 displayed the entered full name and an authenticated session.
@@ -201,6 +202,52 @@ task updates, deletion, personal lists, cascade checks, and the complete
 frontend workflow remain later stages. These checks are not an official
 Academy test coverage result.
 
+### Day 7 progress
+
+`PATCH /api/tasks/{task_id}/` requires board membership. It updates only the
+supplied fields and rejects requests containing `board`. New assignees and
+reviewers must belong to the task's board. HTTP 200 responses contain `id`,
+`title`, `description`, `status`, `priority`, `assignee`, `reviewer`, and
+`due_date`, using nested user data or null for assignments.
+
+`DELETE /api/tasks/{task_id}/` permits the task creator or board owner to delete
+and returns HTTP 204 with no response body. Assignment or membership alone
+never grants deletion rights. GET and PUT are not enabled on this route.
+
+The following cases were manually executed through the Postman desktop app:
+
+- Title-only and multi-field updates: 200, with omitted values preserved and
+  the documented response fields.
+- Clearing assignments with null, clearing description, and empty PATCH: 200.
+- Board change or an explicitly supplied unchanged board: 400.
+- Invalid status or priority, empty/null title, invalid/null date: 400.
+- Board-foreign or unknown assignee/reviewer IDs: 400.
+- PATCH and DELETE without a token or with an invalid token: 401.
+- PATCH by an owner without membership or an unrelated outsider: 403.
+- PATCH and DELETE for unknown tasks: 404.
+- Member who is assignee/reviewer but not creator: PATCH 200, DELETE 403.
+- Creator removed from membership: PATCH 403, DELETE 204.
+- DELETE by an outsider: 403.
+- DELETE by a board owner without membership, and by an owner/creator: 204.
+- Repeated DELETE after successful deletion: 404.
+- GET and PUT on the task detail route: 405.
+
+Board detail requests confirmed that rejected deletion preserved the task and
+that permitted deletion removed tasks from the board's list. Empty HTTP 204
+response bodies were observed in Postman. Disposable tasks and a separate
+test board were created through the app and removed afterward; the existing
+boards, tasks, and membership were preserved.
+
+Saved request templates cover disposable task creation, partial-title updates,
+board-change validation, and owner deletion. Cases were executed by changing
+request values; not every case has a separate saved request. Successful update
+and deletion templates use `task_id` and `disposable_task_id` placeholders that
+must be filled with appropriate local IDs before running. The requests are
+saved locally; no collection export or official test result is included.
+
+Day 7 updates and deletion are implemented and manually checked. Personal task
+lists and actual board counters are the next stage.
+
 ## Development diary
 
 The entries below summarize the completed learning stages. Day numbers refer
@@ -293,6 +340,23 @@ describe the rebuilt implementation; the earlier repository history is retained.
   repeated the affected Postman requests successfully.
 - Remaining follow-up: task PATCH and DELETE on Day 7, personal lists and
   actual board counters on Day 8, and comments on Day 9.
+
+### Day 7 - Task updates and deletion
+
+- Added an object permission: board members can edit; creators or board owners
+  can delete. Kept authentication separate from object permissions.
+- Added an update serializer that rejects board changes and validates new
+  assignments, plus a separate serializer for the PATCH response.
+- Connected the task ID route to a Generic View restricted to PATCH, DELETE,
+  and OPTIONS. Used partial updates to preserve omitted fields.
+- Manually checked updates, validation, authentication, missing tasks, method
+  restrictions, and distinct member/creator/owner deletion roles in Postman.
+- Verified creator deletion after membership removal and owner deletion
+  without membership, with empty 204 responses and subsequent 404 results.
+- Removed disposable test data and preserved the existing local data.
+- Saved reusable Postman request templates and documented actual manual checks.
+- Remaining follow-up: personal task lists and board counters on Day 8,
+  comments on Day 9, and the full frontend workflow and official tests later.
 
 ## Installation
 
@@ -400,6 +464,9 @@ For an outsider check, use a valid token belonging to a user who neither owns no
 For task creation, use a board member token and member IDs for assignments.
 Successful POST requests create additional local tasks; update board and user
 IDs to match your local database. The Day 6 section lists the tested cases.
+For task updates and deletion, follow the Day 7 cases above. Fill the request
+placeholders with your task IDs. Use disposable tasks for successful deletion
+tests and keep creator, owner, member, and outsider roles distinct.
 The current Postman requests are saved in the local workspace collection;
 an updated collection export is not yet included in this repository.
 The earlier automated tests were removed during the rebuild. The official
@@ -411,9 +478,9 @@ checked in Postman; their frontend workflow has not been tested yet. The complet
 workflow still needs to be tested after the remaining endpoints are implemented.
 
 This is a local development setup with `DEBUG = True`. Task creation and
-board detail task lists are implemented. Task PATCH, DELETE, personal lists,
-and comment operations remain pending. Cascade deletion involving tasks and
-comments has not been tested; the Comment model is not implemented yet.
+board detail task lists, task PATCH, and task DELETE are implemented. Personal
+task lists and comment operations remain pending. Cascade deletion involving
+tasks and comments has not been tested; the Comment model is not implemented yet.
 Board task counts and task comment counts currently default to zero.
 Global API authentication uses
 `Authorization: Token <token>`; registration and login allow unauthenticated

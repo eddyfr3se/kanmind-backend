@@ -105,6 +105,49 @@ class TaskCreateSerializer(serializers.ModelSerializer):
         return attrs
 
 
+class TaskUpdateSerializer(TaskCreateSerializer):
+    class Meta:
+        model = Task
+        fields = [
+            "title",
+            "description",
+            "status",
+            "priority",
+            "assignee_id",
+            "reviewer_id",
+            "due_date",
+        ]
+
+    def validate(self, attrs):
+        if "board" in self.initial_data:
+            raise serializers.ValidationError({
+                "board": "The board cannot be changed."
+            })
+        board = self.instance.board
+        for field in ["assignee", "reviewer"]:
+            user = attrs.get(field)
+            if user and not board.members.filter(id=user.id).exists():
+                raise serializers.ValidationError({
+                    f"{field}_id": "User must be a member of the board."
+                })
+        return attrs
+
+
+class TaskUpdateResponseSerializer(TaskSerializer):
+    class Meta:
+        model = Task
+        fields = [
+            "id",
+            "title",
+            "description",
+            "status",
+            "priority",
+            "assignee",
+            "reviewer",
+            "due_date",
+        ]
+
+
 class BoardDetailSerializer(serializers.ModelSerializer):
     owner_id = serializers.IntegerField(read_only=True)
     members = BoardMemberSerializer(many=True, read_only=True)
