@@ -12,10 +12,9 @@ class BoardCreateSerializer(serializers.ModelSerializer):
 
 class BoardListSerializer(serializers.ModelSerializer):
     member_count = serializers.SerializerMethodField()
-    # Board task counters are implemented in a later project stage.
-    ticket_count = serializers.IntegerField(read_only=True, default=0)
-    tasks_to_do_count = serializers.IntegerField(read_only=True, default=0)
-    tasks_high_prio_count = serializers.IntegerField(read_only=True, default=0)
+    ticket_count = serializers.SerializerMethodField()
+    tasks_to_do_count = serializers.SerializerMethodField()
+    tasks_high_prio_count = serializers.SerializerMethodField()
     owner_id = serializers.IntegerField(read_only=True)
 
     class Meta:
@@ -32,6 +31,15 @@ class BoardListSerializer(serializers.ModelSerializer):
 
     def get_member_count(self, obj):
         return obj.members.count()
+
+    def get_ticket_count(self, obj):
+        return obj.tasks.count()
+
+    def get_tasks_to_do_count(self, obj):
+        return obj.tasks.filter(status="to-do").count()
+
+    def get_tasks_high_prio_count(self, obj):
+        return obj.tasks.filter(priority="high").count()
 
 
 class BoardMemberSerializer(serializers.ModelSerializer):

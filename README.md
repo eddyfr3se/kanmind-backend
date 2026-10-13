@@ -47,7 +47,10 @@ Board creation and listing are implemented at `/api/boards/`.
 Board retrieval, partial updates, and deletion are implemented at
 `/api/boards/{board_id}/`. Task creation is implemented at `POST /api/tasks/`.
 Task updates and deletion are implemented at `/api/tasks/{task_id}/`.
-Personal task lists and comment endpoints remain pending.
+Personal task lists are implemented at `GET /api/tasks/assigned-to-me/` and
+`GET /api/tasks/reviewing/`. Board task counters use actual task data.
+Days 1–8 are implemented and checked as described below. Comment endpoints
+remain pending.
 The provided frontend is connected to the local backend. Login was checked
 through the frontend. After a registration test in Safari, the dashboard
 displayed the entered full name and an authenticated session.
@@ -65,7 +68,7 @@ serializer accepts `title` and `members`; the list serializer provides `id`,
 
 Django's system check passed, and the list serializer was checked against the
 saved test board. Member counts use the board's actual membership. Task counts
-temporarily default to zero until the Task model and counting logic are added.
+used temporary zero values at this stage; Day 8 replaces them with actual counts.
 
 `POST /api/boards/` creates a board and returns its short representation with
 HTTP 201. The authenticated user becomes the owner, independently of any
@@ -94,7 +97,7 @@ and saved in the `KanMind` collection:
 - Create with an invalid token: HTTP 401.
 
 Day 4 board setup, creation, and listing are implemented and manually checked.
-Actual task counting and tests with nonzero task counts remain pending.
+Actual task counting and tests with nonzero counts were completed on Day 8.
 Day 5 covers board details, updates, and deletion with their permissions.
 
 ### Day 5 progress
@@ -197,8 +200,8 @@ zero comment counts. An initial HTTP 500 caused by the old ListField
 placeholder was corrected; the affected requests were repeated successfully.
 
 Day 6 task creation and board detail integration are implemented and manually
-checked. Board counters still use temporary zero values. Comment counting,
-task updates, deletion, personal lists, cascade checks, and the complete
+checked. Task updates and deletion followed on Day 7, and personal lists and
+board counters on Day 8. Comment counting, cascade checks, and the complete
 frontend workflow remain later stages. These checks are not an official
 Academy test coverage result.
 
@@ -246,7 +249,44 @@ must be filled with appropriate local IDs before running. The requests are
 saved locally; no collection export or official test result is included.
 
 Day 7 updates and deletion are implemented and manually checked. Personal task
-lists and actual board counters are the next stage.
+lists and actual board counters followed on Day 8.
+
+### Day 8 progress
+
+`GET /api/tasks/assigned-to-me/` filters tasks by the authenticated assignee.
+`GET /api/tasks/reviewing/` filters independently by the authenticated reviewer.
+Both return HTTP 200 lists with the documented task fields, nested user data
+or null assignments, and `comments_count` (currently zero until Day 9).
+
+The following cases were executed in the Postman desktop app:
+
+- Correct role filtering, a task with both roles appearing once in each list,
+  and separate assignee-only and reviewer-only tasks: HTTP 200.
+- A user with no assignments: HTTP 200 and an empty list on both endpoints.
+- Missing and invalid tokens on both endpoints: HTTP 401.
+- POST, PUT, PATCH, and DELETE on both list routes: HTTP 405.
+- Five after-response assertions for successful lists checked status, exact
+  task IDs, duplicates, role IDs, and documented task/user fields; all passed.
+
+Board list counters now count all tasks, tasks with status `to-do`, and tasks
+with priority `high` for each board using SerializerMethodField and ORM queries.
+Postman checks covered empty and populated boards, owner and member views,
+an owner who is also a member, outsider visibility, and missing/invalid tokens.
+Disposable tasks tested to-do/high, done/high, and to-do/low combinations.
+Follow-up GET requests verified the counters after every creation, separate
+status and priority updates, and deletion. Other boards kept their counters.
+Five assertions checked successful list status, board IDs, absence of duplicates,
+exact per-board counters, and the seven documented response fields; all passed.
+Task and board cleanup returned 204, with an empty-body assertion on task
+deletion. The original board counters and personal lists passed again afterward.
+
+Requests and after-response scripts are saved in the local Postman collection.
+Cases were sent individually, not with Collection Runner. Baseline assertions
+use local fixture IDs and counts; adapt them when the database changes.
+The disposable setup templates were subsequently saved with collection variables
+for returned board/task IDs; these revised setup scripts have not been rerun.
+All disposable Day 8 data was removed, preserving the existing boards and tasks.
+These checks do not establish the official Academy PM test coverage result.
 
 ## Development diary
 
@@ -296,7 +336,7 @@ describe the rebuilt implementation; the earlier repository history is retained.
 - Implemented authenticated board creation and listing with explicit serializers.
 - Set ownership from the authenticated user and limited listing to owned or
   shared boards, without duplicate entries.
-- Returned actual member counts; task counts remain temporary zero values.
+- Returned actual member counts; task counts used temporary zero values then.
 - Manually checked and saved eleven board requests through the Postman desktop
   app, covering creation, visibility, invalid input, and authentication failures.
 - Updated the README and pushed commits `900bddc` (model, admin, serializers)
@@ -357,6 +397,22 @@ describe the rebuilt implementation; the earlier repository history is retained.
 - Saved reusable Postman request templates and documented actual manual checks.
 - Remaining follow-up: personal task lists and board counters on Day 8,
   comments on Day 9, and the full frontend workflow and official tests later.
+
+### Day 8 - Personal task lists and board counters
+
+- Added two authenticated ListAPIView classes with separate assignee and
+  reviewer filters in get_queryset, and connected their API routes.
+- Replaced temporary board task counts with actual total, to-do, and high
+  priority counts using SerializerMethodField, filter, and count.
+- Checked role filtering, empty lists, authentication failures, and forbidden
+  write methods through the Postman desktop app.
+- Checked board counts after creation, status and priority updates, and deletion,
+  including owner/member overlap and independent counts on separate boards.
+- Added and executed after-response assertions; successful lists passed all
+  five checks. Rechecked the original lists and counts after test-data cleanup.
+- Saved local Postman request templates and updated the README and diary.
+- Remaining follow-up: comments and actual comment counts on Day 9, followed
+  by the full frontend workflow, systematic testing, and submission checks.
 
 ## Installation
 
@@ -467,6 +523,11 @@ IDs to match your local database. The Day 6 section lists the tested cases.
 For task updates and deletion, follow the Day 7 cases above. Fill the request
 placeholders with your task IDs. Use disposable tasks for successful deletion
 tests and keep creator, owner, member, and outsider roles distinct.
+For personal task lists and board counters, follow the Day 8 cases above.
+Adapt the saved baseline assertions to your local task and board IDs and counts.
+Run disposable board creation first, then task creation, before using the
+counter setup templates' collection variables. Those variable-based setup
+scripts were saved after the manual tests and still need a repeatability check.
 The current Postman requests are saved in the local workspace collection;
 an updated collection export is not yet included in this repository.
 The earlier automated tests were removed during the rebuild. The official
@@ -478,10 +539,10 @@ checked in Postman; their frontend workflow has not been tested yet. The complet
 workflow still needs to be tested after the remaining endpoints are implemented.
 
 This is a local development setup with `DEBUG = True`. Task creation and
-board detail task lists, task PATCH, and task DELETE are implemented. Personal
-task lists and comment operations remain pending. Cascade deletion involving
+board detail task lists, task PATCH, task DELETE, personal task lists, and actual
+board counters are implemented. Comment operations remain pending. Cascade deletion involving
 tasks and comments has not been tested; the Comment model is not implemented yet.
-Board task counts and task comment counts currently default to zero.
+Task comment counts currently default to zero until comments are implemented.
 Global API authentication uses
 `Authorization: Token <token>`; registration and login allow unauthenticated
 requests.

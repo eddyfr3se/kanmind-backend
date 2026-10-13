@@ -71,6 +71,22 @@ class BoardDetailView(generics.RetrieveUpdateDestroyAPIView):
         return Response(response_serializer.data)
 
 
+class AssignedTaskListView(generics.ListAPIView):
+    serializer_class = TaskSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Task.objects.filter(assignee=self.request.user)
+
+
+class ReviewingTaskListView(generics.ListAPIView):
+    serializer_class = TaskSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Task.objects.filter(reviewer=self.request.user)
+
+
 class TaskCreateView(generics.CreateAPIView):
     serializer_class = TaskCreateSerializer
     permission_classes = [IsAuthenticated]
