@@ -145,8 +145,10 @@ included in the 172-request collection. Official Academy PM tests remain open.
 
 - The official Academy PM collection has not been run; the required official
   95% coverage result is not established by these 387 assertions.
-- The separate frontend display issue and remaining frontend checks described
-  in the main README remain open.
+- The separate Safari checks were completed on Day 13, as recorded in the
+  main README. They are not additional Postman assertions. The local frontend
+  status-display issue was corrected; denied board access still shows an empty
+  frontend placeholder.
 - Installation from a committed archive was checked on Day 12. A fresh GitHub
   clone, interactive superuser prompts and final submission review remain open.
 - Postman offered the Runner results JSON export only with a paid upgrade in

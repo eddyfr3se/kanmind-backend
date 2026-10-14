@@ -49,7 +49,7 @@ Board retrieval, partial updates, and deletion are implemented at
 Task updates and deletion are implemented at `/api/tasks/{task_id}/`.
 Personal task lists are implemented at `GET /api/tasks/assigned-to-me/` and
 `GET /api/tasks/reviewing/`. Board task counters use actual task data.
-Days 1–12 are documented below, including implementation, frontend checks
+Days 1–13 are documented below, including implementation, frontend checks
 and a repeatable Postman regression run. Comments can be
 listed and created at `/api/tasks/{task_id}/comments/` and deleted at
 `/api/tasks/{task_id}/comments/{comment_id}/`. Task comment counts use actual
@@ -472,6 +472,31 @@ complete. This does not establish full API acceptance: the official Academy
 PM result and remaining frontend checks are still open. A fresh GitHub clone
 and interactive superuser prompts were not exercised in the installation check.
 
+### Day 13 progress
+
+The remaining guest-login, task-status display and removed-member workflows
+were checked in Safari using a new local test board and fictional accounts.
+Guest login now uses a locally registered, nonstaff test user configured only
+in the separate frontend. The Academy's preset account was not present in the
+local database. No new backend endpoint was added.
+
+A status change was saved correctly by the backend, but opening the edit dialog
+immediately showed the previous status. In the separate frontend's
+`pages/board/board.js`, `modifyTaskStatus` now updates `currentTask.status` from
+the successful PATCH response before refreshing the board. The edit dialog then
+showed the new Review status immediately; saving and reloading preserved it.
+This local frontend correction is not part of this backend repository.
+
+A member could open the new board before removal. After removal through board
+settings, a fresh member login no longer listed that board. Its direct URL
+showed no board title or task data. The provided frontend displays an empty
+placeholder instead of a clear access-denied message in that case.
+
+No downloadable official PM test collection was found on the accessible
+Academy project and submission pages. This does not prove that no such suite
+exists. The official 95% acceptance result remains unverified. These Safari
+checks are separate from the recorded Postman collection results.
+
 ## Development diary
 
 The entries below summarize the completed learning stages. Day numbers refer
@@ -680,6 +705,21 @@ describe the rebuilt implementation; the earlier repository history is retained.
   submission review. Interactive superuser prompts and a fresh GitHub clone
   remain untested; installation was checked from a committed archive.
 
+### Day 13 - Remaining frontend checks
+
+- Configured a fictional local guest account in the separate frontend and
+  checked Guest Log in successfully in Safari.
+- Reproduced the stale status in the task edit dialog and corrected the local
+  frontend's current-task copy after a successful status PATCH.
+- Checked the new status immediately in the editor and after saving/reloading.
+- Checked member access before removal, removed the member through settings,
+  and checked the member's overview and direct board link after a fresh login.
+- Recorded the remaining placeholder message for denied frontend board access.
+- Looked for official PM materials on accessible Academy pages; no downloadable
+  test collection was found and no official acceptance result is claimed.
+- Remaining work: official PM acceptance, final submission review, and the
+  previously untested fresh GitHub clone and interactive superuser prompts.
+
 ## Installation
 
 The local setup uses Python 3.14, Django, Django REST Framework,
@@ -771,7 +811,23 @@ including its hostname and port.
 Register a local test user with a new email address, then use that user's
 credentials for login. The frontend sends the returned token in
 `Authorization: Token <token>` for protected requests. Its preset guest
-credentials do not automatically create a local backend user.
+credentials do not automatically create a local backend user. To use Guest
+Log in locally, create your own fictional test user and set `GUEST_LOGIN` in
+that separate frontend's `shared/js/config.js` to its credentials. Keep those
+local credentials out of public Git exports.
+
+The locally tested frontend also contains a small status-display correction.
+In `pages/board/board.js`, inside the successful branch of `modifyTaskStatus`,
+add this before `await loadAndRenderTasks()`:
+
+```javascript
+if (currentTask && currentTask.id === id) {
+    currentTask.status = response.data.status;
+}
+```
+
+This keeps the open task's status consistent with the backend response when
+switching directly from the detail dialog to the edit dialog.
 
 ## Testing and limitations
 
@@ -818,23 +874,23 @@ passed all 387 assertions. The sanitized export has not been reimported with
 a different installation's accounts. The official Academy Postman suite has
 not been run against this version.
 
-The central frontend workflows were checked in Safari on Day 10 as described
-above. One display issue remains: after changing a task's status in its detail
-dialog, opening the edit dialog immediately showed the previous status.
-Reloading the page showed the correctly persisted value. The provided frontend
-source was not changed for this issue. Guest login was not tested, and member
-removal was checked in board settings without a separate login as the removed
-member. These are not claims of a complete frontend acceptance pass.
+The central frontend workflows were checked in Safari on Day 10. Day 13 added
+successful guest login, the local task-status display correction and a separate
+login as a removed member. The removed member no longer saw the test board in
+the overview or its data through a direct link. The frontend still renders an
+empty placeholder instead of a clear access-denied message for that direct
+link. The guest configuration and status-display correction live only in the
+separate local frontend; follow the setup notes above on another installation.
+These results do not establish an official Academy acceptance pass.
 
 This is a local development setup with `DEBUG = True`. Task creation and
 board detail task lists, task PATCH, task DELETE, personal task lists, and actual
 board counters are implemented. Comment operations and actual comment counts
 are implemented. Task/comment and board/task/comment cascade deletion were
-checked on disposable local data. The remaining frontend checks,
-the official PM acceptance suite and the full school checklist remain
-outstanding. Installation from a committed archive was checked on Day 12;
-a fresh GitHub clone and interactive superuser creation remain untested; this project is not yet declared ready
-for submission.
+checked on disposable local data. The official PM acceptance suite and final
+submission review remain outstanding. Installation from a committed archive
+was checked on Day 12; a fresh GitHub clone and interactive superuser creation
+remain untested. This project is not yet declared ready for submission.
 Global API authentication uses
 `Authorization: Token <token>`; registration and login allow unauthenticated
 requests.
