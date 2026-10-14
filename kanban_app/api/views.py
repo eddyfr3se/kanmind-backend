@@ -8,18 +8,21 @@ from rest_framework.response import Response
 from kanban_app.api.permissions import (
     CanEditOrDeleteTask,
     IsBoardOwnerOrMember,
+    IsCommentAuthor,
+    IsTaskBoardMember,
 )
 from kanban_app.api.serializers import (
     BoardCreateSerializer,
     BoardDetailSerializer,
     BoardListSerializer,
     BoardUpdateResponseSerializer,
+    CommentSerializer,
     TaskCreateSerializer,
     TaskSerializer,
     TaskUpdateResponseSerializer,
     TaskUpdateSerializer,
 )
-from kanban_app.models import Board, Task
+from kanban_app.models import Board, Comment, Task
 
 
 class BoardListCreateView(generics.ListCreateAPIView):
@@ -125,3 +128,31 @@ class TaskUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
         self.perform_update(serializer)
         response_serializer = TaskUpdateResponseSerializer(task)
         return Response(response_serializer.data)
+
+
+class CommentListCreateView(generics.ListCreateAPIView):
+    serializer_class = CommentSerializer
+    permission_classes = [IsAuthenticated, IsTaskBoardMember]
+    http_method_names = ["get", "post", "head", "options"]
+
+    def get_queryset(self):
+        return Comment.objects.filter(
+            task_id=self.kwargs["task_id"],
+        ).order_by("created_at", "id")
+
+    def perform_create(self, serializer):
+        serializer.save(
+            task_id=self.kwargs["task_id"],
+            author=self.request.user,
+        )
+
+
+class CommentDeleteView(generics.DestroyAPIView):
+    serializer_class = CommentSerializer
+    permission_classes = [IsAuthenticated, IsCommentAuthor]
+    http_method_names = ["delete", "options"]
+    lookup_url_kwarg = "comment_id"
+
+    def get_queryset(self):
+        task = get_object_or_404(Task, pk=self.kwargs["task_id"])
+        return Comment.objects.filter(task=task)

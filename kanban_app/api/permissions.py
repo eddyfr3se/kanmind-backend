@@ -1,4 +1,7 @@
+from django.shortcuts import get_object_or_404
 from rest_framework.permissions import BasePermission
+
+from kanban_app.models import Task
 
 
 class IsBoardOwnerOrMember(BasePermission):
@@ -21,3 +24,18 @@ class CanEditOrDeleteTask(BasePermission):
         if request.method == "PATCH":
             return obj.board.members.filter(id=request.user.id).exists()
         return False
+
+
+class IsTaskBoardMember(BasePermission):
+    message = "You must be a member of the board."
+
+    def has_permission(self, request, view):
+        task = get_object_or_404(Task, pk=view.kwargs["task_id"])
+        return task.board.members.filter(id=request.user.id).exists()
+
+
+class IsCommentAuthor(BasePermission):
+    message = "Only the comment author can delete this comment."
+
+    def has_object_permission(self, request, view, obj):
+        return obj.author_id == request.user.id

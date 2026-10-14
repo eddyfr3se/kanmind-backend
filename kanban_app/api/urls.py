@@ -4,6 +4,8 @@ from kanban_app.api.views import (
     AssignedTaskListView,
     BoardDetailView,
     BoardListCreateView,
+    CommentDeleteView,
+    CommentListCreateView,
     ReviewingTaskListView,
     TaskCreateView,
     TaskUpdateDeleteView,
@@ -22,6 +24,16 @@ urlpatterns = [
         name="tasks-reviewing",
     ),
     path("tasks/", TaskCreateView.as_view(), name="task-create"),
+    path(
+        "tasks/<int:task_id>/comments/",
+        CommentListCreateView.as_view(),
+        name="task-comments",
+    ),
+    path(
+        "tasks/<int:task_id>/comments/<int:comment_id>/",
+        CommentDeleteView.as_view(),
+        name="task-comment-delete",
+    ),
     path(
         "tasks/<int:pk>/",
         TaskUpdateDeleteView.as_view(),

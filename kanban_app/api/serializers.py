@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
-from kanban_app.models import Board, Task
+from kanban_app.models import Board, Comment, Task
 
 
 class BoardCreateSerializer(serializers.ModelSerializer):
@@ -56,8 +56,7 @@ class BoardMemberSerializer(serializers.ModelSerializer):
 class TaskSerializer(serializers.ModelSerializer):
     assignee = BoardMemberSerializer(read_only=True)
     reviewer = BoardMemberSerializer(read_only=True)
-    # Comments are implemented in a later project stage.
-    comments_count = serializers.IntegerField(read_only=True, default=0)
+    comments_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Task
@@ -73,6 +72,9 @@ class TaskSerializer(serializers.ModelSerializer):
             "due_date",
             "comments_count",
         ]
+
+    def get_comments_count(self, obj):
+        return obj.comments.count()
 
 
 class TaskCreateSerializer(serializers.ModelSerializer):
@@ -177,3 +179,15 @@ class BoardUpdateResponseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Board
         fields = ["id", "title", "owner_data", "members_data"]
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    author = serializers.CharField(
+        source="author.profile.fullname",
+        read_only=True,
+    )
+
+    class Meta:
+        model = Comment
+        fields = ["id", "created_at", "author", "content"]
+        read_only_fields = ["id", "created_at"]

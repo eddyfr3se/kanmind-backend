@@ -49,8 +49,11 @@ Board retrieval, partial updates, and deletion are implemented at
 Task updates and deletion are implemented at `/api/tasks/{task_id}/`.
 Personal task lists are implemented at `GET /api/tasks/assigned-to-me/` and
 `GET /api/tasks/reviewing/`. Board task counters use actual task data.
-Days 1–8 are implemented and checked as described below. Comment endpoints
-remain pending.
+Days 1–9 are implemented and checked as described below. Comments can be
+listed and created at `/api/tasks/{task_id}/comments/` and deleted at
+`/api/tasks/{task_id}/comments/{comment_id}/`. Task comment counts use actual
+comment data. All 16 planned API operations are implemented; full frontend
+verification and the official Academy acceptance tests remain outstanding.
 The provided frontend is connected to the local backend. Login was checked
 through the frontend. After a registration test in Safari, the dashboard
 displayed the entered full name and an authenticated session.
@@ -160,8 +163,8 @@ in the response. The successful owner deletion used a board with no members,
 confirming that ownership alone grants the deletion right.
 
 Board details, PATCH, and DELETE are implemented and manually checked for
-Day 5. Task integration and cascade deletion of tasks and comments remain
-follow-up work once those models exist. These manual checks do not establish
+Day 5. Task integration followed on Day 6; cascade deletion involving tasks
+and comments was checked on Day 9. These manual checks do not establish
 an official Academy test coverage result.
 
 ### Day 6 progress
@@ -201,8 +204,8 @@ placeholder was corrected; the affected requests were repeated successfully.
 
 Day 6 task creation and board detail integration are implemented and manually
 checked. Task updates and deletion followed on Day 7, and personal lists and
-board counters on Day 8. Comment counting, cascade checks, and the complete
-frontend workflow remain later stages. These checks are not an official
+board counters on Day 8. Comment counting and cascade checks followed on Day 9.
+The complete frontend workflow remains outstanding. These checks are not an official
 Academy test coverage result.
 
 ### Day 7 progress
@@ -256,7 +259,8 @@ lists and actual board counters followed on Day 8.
 `GET /api/tasks/assigned-to-me/` filters tasks by the authenticated assignee.
 `GET /api/tasks/reviewing/` filters independently by the authenticated reviewer.
 Both return HTTP 200 lists with the documented task fields, nested user data
-or null assignments, and `comments_count` (currently zero until Day 9).
+or null assignments, and `comments_count` (a zero placeholder at this stage,
+replaced with actual counts on Day 9).
 
 The following cases were executed in the Postman desktop app:
 
@@ -287,6 +291,56 @@ The disposable setup templates were subsequently saved with collection variables
 for returned board/task IDs; these revised setup scripts have not been rerun.
 All disposable Day 8 data was removed, preserving the existing boards and tasks.
 These checks do not establish the official Academy PM test coverage result.
+
+### Day 9 progress
+
+The Comment model stores its task, author, content and automatic creation time.
+Migration `0003_comment` is applied, and Comment is registered in Django admin.
+The ModelSerializer returns `id`, `created_at`, `author` as the full name, and
+`content`. Only content is writable; the view sets the task and authenticated
+author. Generic Views and permissions follow the patterns from earlier stages.
+
+`GET /api/tasks/{task_id}/comments/` lists only that task's comments, ordered
+by creation time and then ID. `POST` on the same route requires board membership
+and returns 201. Ownership alone does not grant read or create permission.
+`DELETE /api/tasks/{task_id}/comments/{comment_id}/` allows only the comment
+author and returns an empty 204 response. This author right remains valid after
+membership removal. The comment must belong to the task in the URL.
+
+The following checks were executed through the Postman desktop app:
+
+- Member and owner/member creation: 201 with the four documented fields.
+  Supplied author, ID, timestamp and task fields did not override server values.
+- Member and owner/member listing: 200; chronological order, empty lists and
+  separation between tasks were confirmed.
+- Empty or whitespace-only content, missing content, null, list, object and
+  boolean content: 400.
+- Missing and invalid tokens for GET, POST and DELETE: 401.
+- Outsider and owner without membership reading or creating: 403.
+- Owner, other member and outsider deleting another author's comment: 403.
+- Unknown task/comment IDs and a comment under the wrong task URL: 404.
+- Successful author deletion: 204 with an empty body; repeated deletion: 404.
+- Removed member reading or creating: 403; deleting their own comment: 204.
+- PUT, PATCH and DELETE on the list route, and GET, POST, PUT and PATCH on
+  the comment detail route: 405.
+
+After-response assertions verified successful comment fields, authors, content,
+server ID/time, list order and IDs, response status and empty 204 bodies.
+`comments_count` was checked in board details, assigned-to-me and reviewing.
+Counts fell after comment deletion, and rejected deletes preserved the comments.
+Task deletion removed its comments while another task and comment remained.
+Board deletion removed its task and comment. Follow-up API requests and
+supplementary read-only ORM inspections confirmed the cascade and cleanup.
+All disposable Day 9 data was removed; original boards, tasks and membership
+were preserved. The original board's comment counts were zero afterward.
+
+Five request templates are saved in the local Postman collection. Cases were
+sent individually by changing request values, not through Collection Runner;
+not every case has a separate request. Create/delete templates now use
+`comment_task_id` and `comment_id` collection variables. This final variable
+configuration was saved after cleanup and has not been rerun. No collection
+export or official Academy PM result is included. Postman was restarted after
+a duplicate-request UI action failed; no backend fix was needed during testing.
 
 ## Development diary
 
@@ -414,6 +468,25 @@ describe the rebuilt implementation; the earlier repository history is retained.
 - Remaining follow-up: comments and actual comment counts on Day 9, followed
   by the full frontend workflow, systematic testing, and submission checks.
 
+### Day 9 - Task comments
+
+- Added Comment with task and author relationships, content, creation time and
+  a short string representation; created and applied migration `0003_comment`.
+- Registered comments in Django admin and added a ModelSerializer with explicit
+  response fields and read-only author, ID and timestamp.
+- Added list/create and delete Generic Views, API routes, board membership
+  permission for reading/creation, and an author-only deletion permission.
+- Restricted methods and checked task/comment URL matching before deletion.
+- Replaced the task comment-count placeholder with an actual relation count.
+- Executed successful, invalid-input, authentication, role, missing-object,
+  method, ordering, count and cascade checks in the Postman desktop app.
+- Confirmed the distinct rights of an author removed from board membership.
+- Removed disposable test data and preserved original local data; saved request
+  templates and documented the results and remaining test limitations.
+- Remaining follow-up: the full frontend workflow on Day 10, systematic
+  Collection Runner checks, a collection export, official PM tests and final
+  installation/submission checks.
+
 ## Installation
 
 The local setup uses Python 3.14, Django, Django REST Framework,
@@ -528,6 +601,12 @@ Adapt the saved baseline assertions to your local task and board IDs and counts.
 Run disposable board creation first, then task creation, before using the
 counter setup templates' collection variables. Those variable-based setup
 scripts were saved after the manual tests and still need a repeatability check.
+For comments, follow the Day 9 cases above. Set `comment_task_id` to a local
+task accessible to the test member; successful creation can store the returned
+ID in `comment_id` for deletion. Use separate authors, other members, owners
+and outsiders. Adapt fixture IDs and expected counts, use disposable data for
+deletion/cascade checks, and rerun the final variable-based templates before
+using them in an automated collection run.
 The current Postman requests are saved in the local workspace collection;
 an updated collection export is not yet included in this repository.
 The earlier automated tests were removed during the rebuild. The official
@@ -536,13 +615,15 @@ Academy Postman suite has not been run against this version.
 The first frontend checks covered login and registration leading to the
 dashboard. Board creation, listing, retrieval, updates, and deletion were
 checked in Postman; their frontend workflow has not been tested yet. The complete frontend
-workflow still needs to be tested after the remaining endpoints are implemented.
+workflow is the next stage now that all planned endpoints are implemented.
 
 This is a local development setup with `DEBUG = True`. Task creation and
 board detail task lists, task PATCH, task DELETE, personal task lists, and actual
-board counters are implemented. Comment operations remain pending. Cascade deletion involving
-tasks and comments has not been tested; the Comment model is not implemented yet.
-Task comment counts currently default to zero until comments are implemented.
+board counters are implemented. Comment operations and actual comment counts
+are implemented. Task/comment and board/task/comment cascade deletion were
+checked on disposable local data. Full frontend testing, repeatable collection
+runs, the official PM acceptance suite and a clean-checkout installation test
+remain outstanding; this project is not yet declared ready for submission.
 Global API authentication uses
 `Authorization: Token <token>`; registration and login allow unauthenticated
 requests.
