@@ -52,8 +52,9 @@ Personal task lists are implemented at `GET /api/tasks/assigned-to-me/` and
 Days 1–9 are implemented and checked as described below. Comments can be
 listed and created at `/api/tasks/{task_id}/comments/` and deleted at
 `/api/tasks/{task_id}/comments/{comment_id}/`. Task comment counts use actual
-comment data. All 16 planned API operations are implemented; full frontend
-verification and the official Academy acceptance tests remain outstanding.
+comment data. All 16 planned API operations are implemented. The central
+frontend workflows were checked in Safari on Day 10; the remaining limitations
+and official Academy acceptance tests are described below.
 The provided frontend is connected to the local backend. Login was checked
 through the frontend. After a registration test in Safari, the dashboard
 displayed the entered full name and an authenticated session.
@@ -205,14 +206,16 @@ placeholder was corrected; the affected requests were repeated successfully.
 Day 6 task creation and board detail integration are implemented and manually
 checked. Task updates and deletion followed on Day 7, and personal lists and
 board counters on Day 8. Comment counting and cascade checks followed on Day 9.
-The complete frontend workflow remains outstanding. These checks are not an official
-Academy test coverage result.
+The central frontend workflows were checked on Day 10. These checks are not
+an official Academy test coverage result.
 
 ### Day 7 progress
 
 `PATCH /api/tasks/{task_id}/` requires board membership. It updates only the
-supplied fields and rejects requests containing `board`. New assignees and
-reviewers must belong to the task's board. HTTP 200 responses contain `id`,
+supplied fields and rejects a different `board` ID. An explicitly supplied
+unchanged board ID is accepted since the Day 10 integration correction.
+New assignees and reviewers must belong to the task's board. HTTP 200 responses
+contain `id`,
 `title`, `description`, `status`, `priority`, `assignee`, `reviewer`, and
 `due_date`, using nested user data or null for assignments.
 
@@ -225,7 +228,8 @@ The following cases were manually executed through the Postman desktop app:
 - Title-only and multi-field updates: 200, with omitted values preserved and
   the documented response fields.
 - Clearing assignments with null, clearing description, and empty PATCH: 200.
-- Board change or an explicitly supplied unchanged board: 400.
+- Board change or an explicitly supplied unchanged board: 400 at this stage.
+  Day 10 corrected the unchanged-ID case to 200; board changes remain rejected.
 - Invalid status or priority, empty/null title, invalid/null date: 400.
 - Board-foreign or unknown assignee/reviewer IDs: 400.
 - PATCH and DELETE without a token or with an invalid token: 401.
@@ -341,6 +345,44 @@ not every case has a separate request. Create/delete templates now use
 configuration was saved after cleanup and has not been rerun. No collection
 export or official Academy PM result is included. Postman was restarted after
 a duplicate-request UI action failed; no backend fix was needed during testing.
+
+### Day 10 progress
+
+The provided frontend was served separately on port 5500 and tested visibly
+in Safari against the backend on port 8001. The following workflows were checked:
+
+- Wrong-password rejection, existing-user login, logout, and new-user
+  registration leading to an authenticated dashboard.
+- Board creation with explicitly selected owner/member accounts, listing,
+  retrieval, title changes by a member, and member removal and re-addition.
+- Unknown invitation email rejection.
+- Task creation with different assignee and reviewer accounts, a due date,
+  status changes, and title, description and priority updates.
+- Persistence of task changes, assignments and comments after page reload.
+- Separate Assigned and To Review lists for the test accounts.
+- Comments by two users in chronological order, the author's delete control,
+  deletion of the author's comment, and updated comment counts in the dashboard.
+- Denied task and board deletion by a member who was neither creator nor owner.
+- Successful task deletion by its creator and board deletion by its owner.
+
+Task editing initially failed because the frontend includes the unchanged
+board ID in its PATCH body. The update serializer previously rejected any
+supplied board field. It now compares the supplied ID with the existing board
+and rejects only a different value. The field remains outside the writable
+serializer fields. The failed frontend edit was repeated successfully and
+its saved values were verified after reload.
+
+Regression requests were executed in the Postman desktop app: the unchanged
+board ID and an omitted board field returned 200; a different ID and null
+returned 400. The request `Tasks - unchanged board ID accepted` was saved in
+the local collection with status and response-field assertions. Both passed
+again when the saved request was rerun. A supplementary read-only database
+check confirmed that the existing task had not moved to another board.
+
+Disposable board, task and comment data was removed with the user's approval;
+the original boards and tasks remained. Django's system check and the Git
+whitespace check passed. These results do not establish official PM coverage.
+The frontend limitations and remaining acceptance checks are listed below.
 
 ## Development diary
 
@@ -487,6 +529,22 @@ describe the rebuilt implementation; the earlier repository history is retained.
   Collection Runner checks, a collection export, official PM tests and final
   installation/submission checks.
 
+### Day 10 - Frontend workflow and task update correction
+
+- Tested registration, login, boards, tasks and comments through Safari using
+  the separate Academy frontend and local backend.
+- Checked separate assignee/reviewer views, persisted values after reload,
+  membership changes, and different editing/deletion rights.
+- Corrected task validation to accept the unchanged board ID included by the
+  frontend while continuing to reject a board change.
+- Repeated the frontend edit and checked unchanged, different, omitted and
+  null board values through the Postman desktop app.
+- Saved and reran an unchanged-board request with two passing assertions.
+- Removed approved disposable test data and verified the original data remained.
+- Updated this README and diary with actual results and known limitations.
+- Remaining follow-up: repeatable Collection Runner coverage, collection export,
+  the frontend display issue below, official PM tests and clean installation.
+
 ## Installation
 
 The local setup uses Python 3.14, Django, Django REST Framework,
@@ -561,7 +619,14 @@ const API_BASE_URL = 'http://127.0.0.1:8001/api/';
 ```
 
 Keep the Django server running in its terminal. Open the frontend's root
-`index.html` with Live Server in the editor. The tested frontend address is
+`index.html` with Live Server in the editor, or serve the separate directory
+from a second terminal in the backend directory:
+
+```bash
+python -m http.server 5500 --bind 127.0.0.1 --directory ../KanMind_Frontend
+```
+
+Keep both servers running. The tested frontend address is
 http://127.0.0.1:5500/pages/auth/login.html.
 The backend's `CORS_ALLOWED_ORIGINS` must allow the frontend's actual origin,
 including its hostname and port.
@@ -612,18 +677,22 @@ an updated collection export is not yet included in this repository.
 The earlier automated tests were removed during the rebuild. The official
 Academy Postman suite has not been run against this version.
 
-The first frontend checks covered login and registration leading to the
-dashboard. Board creation, listing, retrieval, updates, and deletion were
-checked in Postman; their frontend workflow has not been tested yet. The complete frontend
-workflow is the next stage now that all planned endpoints are implemented.
+The central frontend workflows were checked in Safari on Day 10 as described
+above. One display issue remains: after changing a task's status in its detail
+dialog, opening the edit dialog immediately showed the previous status.
+Reloading the page showed the correctly persisted value. The provided frontend
+source was not changed for this issue. Guest login was not tested, and member
+removal was checked in board settings without a separate login as the removed
+member. These are not claims of a complete frontend acceptance pass.
 
 This is a local development setup with `DEBUG = True`. Task creation and
 board detail task lists, task PATCH, task DELETE, personal task lists, and actual
 board counters are implemented. Comment operations and actual comment counts
 are implemented. Task/comment and board/task/comment cascade deletion were
-checked on disposable local data. Full frontend testing, repeatable collection
-runs, the official PM acceptance suite and a clean-checkout installation test
-remain outstanding; this project is not yet declared ready for submission.
+checked on disposable local data. The remaining frontend checks, repeatable
+collection runs, the official PM acceptance suite and a clean-checkout
+installation test remain outstanding; this project is not yet declared ready
+for submission.
 Global API authentication uses
 `Authorization: Token <token>`; registration and login allow unauthenticated
 requests.

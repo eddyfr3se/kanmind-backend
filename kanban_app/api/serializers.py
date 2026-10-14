@@ -129,10 +129,7 @@ class TaskUpdateSerializer(TaskCreateSerializer):
         ]
 
     def validate(self, attrs):
-        if "board" in self.initial_data:
-            raise serializers.ValidationError({
-                "board": "The board cannot be changed."
-            })
+        self.validate_board_reference()
         board = self.instance.board
         for field in ["assignee", "reviewer"]:
             user = attrs.get(field)
@@ -141,6 +138,13 @@ class TaskUpdateSerializer(TaskCreateSerializer):
                     f"{field}_id": "User must be a member of the board."
                 })
         return attrs
+
+    def validate_board_reference(self):
+        board_id = self.initial_data.get("board", self.instance.board_id)
+        if str(board_id) != str(self.instance.board_id):
+            raise serializers.ValidationError({
+                "board": "The board cannot be changed."
+            })
 
 
 class TaskUpdateResponseSerializer(TaskSerializer):
