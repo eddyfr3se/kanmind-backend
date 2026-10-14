@@ -5,6 +5,8 @@ from kanban_app.models import Task
 
 
 class IsBoardOwnerOrMember(BasePermission):
+    """Allow owners and members to read or edit; only owners may delete."""
+
     def has_object_permission(self, request, view, obj):
         is_owner = obj.owner_id == request.user.id
         if request.method == "DELETE":
@@ -16,6 +18,8 @@ class IsBoardOwnerOrMember(BasePermission):
 
 
 class CanEditOrDeleteTask(BasePermission):
+    """Allow members to edit; the creator or board owner may delete."""
+
     def has_object_permission(self, request, view, obj):
         if request.method == "DELETE":
             is_creator = obj.creator_id == request.user.id
@@ -27,6 +31,8 @@ class CanEditOrDeleteTask(BasePermission):
 
 
 class IsTaskBoardMember(BasePermission):
+    """Require board membership to read or create task comments."""
+
     message = "You must be a member of the board."
 
     def has_permission(self, request, view):
@@ -35,6 +41,8 @@ class IsTaskBoardMember(BasePermission):
 
 
 class IsCommentAuthor(BasePermission):
+    """Let authors delete their comments, even after leaving the board."""
+
     message = "Only the comment author can delete this comment."
 
     def has_object_permission(self, request, view, obj):

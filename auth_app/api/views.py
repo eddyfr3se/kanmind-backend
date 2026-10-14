@@ -1,5 +1,4 @@
 from django.contrib.auth.models import User
-
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -14,6 +13,8 @@ from auth_app.api.serializers import (
 
 
 class RegistrationView(APIView):
+    """Create an account and return its token and user details."""
+
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -31,6 +32,8 @@ class RegistrationView(APIView):
 
 
 class LoginView(APIView):
+    """Authenticate an account and return its token and user details."""
+
     authentication_classes = []
     permission_classes = [AllowAny]
 
@@ -49,6 +52,8 @@ class LoginView(APIView):
 
 
 class EmailCheckView(APIView):
+    """Let authenticated users find user details by email address."""
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request):

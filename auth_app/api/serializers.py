@@ -8,6 +8,8 @@ from auth_app.models import UserProfile
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
+    """Validate registration data and create a user and full-name profile."""
+
     fullname = serializers.CharField(write_only=True)
     email = serializers.EmailField(required=True)
     password = serializers.CharField(
@@ -56,6 +58,8 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
 
 class LoginSerializer(serializers.Serializer):
+    """Validate email and password and authenticate the matching account."""
+
     email = serializers.EmailField()
     password = serializers.CharField(
         write_only=True,
@@ -77,4 +81,6 @@ class LoginSerializer(serializers.Serializer):
 
 
 class EmailCheckSerializer(serializers.Serializer):
+    """Validate the email query parameter used for user lookup."""
+
     email = serializers.EmailField()

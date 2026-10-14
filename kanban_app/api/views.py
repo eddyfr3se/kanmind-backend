@@ -26,6 +26,8 @@ from kanban_app.models import Board, Comment, Task
 
 
 class BoardListCreateView(generics.ListCreateAPIView):
+    """List owned or shared boards and create boards for the current user."""
+
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -51,6 +53,8 @@ class BoardListCreateView(generics.ListCreateAPIView):
 
 
 class BoardDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """Read, update or delete boards according to the user's board role."""
+
     queryset = Board.objects.all()
     http_method_names = ["get", "patch", "delete", "head", "options"]
     permission_classes = [
@@ -75,6 +79,8 @@ class BoardDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 
 class AssignedTaskListView(generics.ListAPIView):
+    """List tasks assigned to the current user."""
+
     serializer_class = TaskSerializer
     permission_classes = [IsAuthenticated]
 
@@ -83,6 +89,8 @@ class AssignedTaskListView(generics.ListAPIView):
 
 
 class ReviewingTaskListView(generics.ListAPIView):
+    """List tasks the current user is assigned to review."""
+
     serializer_class = TaskSerializer
     permission_classes = [IsAuthenticated]
 
@@ -91,6 +99,8 @@ class ReviewingTaskListView(generics.ListAPIView):
 
 
 class TaskCreateView(generics.CreateAPIView):
+    """Create tasks for members and record the current user as creator."""
+
     serializer_class = TaskCreateSerializer
     permission_classes = [IsAuthenticated]
 
@@ -114,6 +124,8 @@ class TaskCreateView(generics.CreateAPIView):
 
 
 class TaskUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
+    """Apply separate permissions for task updates and deletion."""
+
     queryset = Task.objects.all()
     serializer_class = TaskUpdateSerializer
     permission_classes = [IsAuthenticated, CanEditOrDeleteTask]
@@ -131,6 +143,8 @@ class TaskUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
 
 
 class CommentListCreateView(generics.ListCreateAPIView):
+    """List comments chronologically and create comments for board members."""
+
     serializer_class = CommentSerializer
     permission_classes = [IsAuthenticated, IsTaskBoardMember]
     http_method_names = ["get", "post", "head", "options"]
@@ -148,6 +162,8 @@ class CommentListCreateView(generics.ListCreateAPIView):
 
 
 class CommentDeleteView(generics.DestroyAPIView):
+    """Let authors delete comments belonging to the task in the URL."""
+
     serializer_class = CommentSerializer
     permission_classes = [IsAuthenticated, IsCommentAuthor]
     http_method_names = ["delete", "options"]

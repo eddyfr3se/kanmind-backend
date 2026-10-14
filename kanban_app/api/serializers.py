@@ -5,12 +5,16 @@ from kanban_app.models import Board, Comment, Task
 
 
 class BoardCreateSerializer(serializers.ModelSerializer):
+    """Validate titles and member lists for board creation and updates."""
+
     class Meta:
         model = Board
         fields = ["title", "members"]
 
 
 class BoardListSerializer(serializers.ModelSerializer):
+    """Return board summaries with membership and task counts."""
+
     member_count = serializers.SerializerMethodField()
     ticket_count = serializers.SerializerMethodField()
     tasks_to_do_count = serializers.SerializerMethodField()
@@ -43,6 +47,8 @@ class BoardListSerializer(serializers.ModelSerializer):
 
 
 class BoardMemberSerializer(serializers.ModelSerializer):
+    """Return user IDs, emails and full names for nested API responses."""
+
     fullname = serializers.CharField(
         source="profile.fullname",
         read_only=True,
@@ -54,6 +60,8 @@ class BoardMemberSerializer(serializers.ModelSerializer):
 
 
 class TaskSerializer(serializers.ModelSerializer):
+    """Return task details with assigned users and the comment count."""
+
     assignee = BoardMemberSerializer(read_only=True)
     reviewer = BoardMemberSerializer(read_only=True)
     comments_count = serializers.SerializerMethodField()
@@ -78,6 +86,8 @@ class TaskSerializer(serializers.ModelSerializer):
 
 
 class TaskCreateSerializer(serializers.ModelSerializer):
+    """Validate task input and require assigned users to be board members."""
+
     assignee_id = serializers.PrimaryKeyRelatedField(
         source="assignee",
         queryset=User.objects.all(),
@@ -116,6 +126,8 @@ class TaskCreateSerializer(serializers.ModelSerializer):
 
 
 class TaskUpdateSerializer(TaskCreateSerializer):
+    """Validate partial task updates while preserving the existing board."""
+
     class Meta:
         model = Task
         fields = [
@@ -148,6 +160,8 @@ class TaskUpdateSerializer(TaskCreateSerializer):
 
 
 class TaskUpdateResponseSerializer(TaskSerializer):
+    """Return the documented task fields after a partial update."""
+
     class Meta:
         model = Task
         fields = [
@@ -163,6 +177,8 @@ class TaskUpdateResponseSerializer(TaskSerializer):
 
 
 class BoardDetailSerializer(serializers.ModelSerializer):
+    """Return a board with its members and tasks."""
+
     owner_id = serializers.IntegerField(read_only=True)
     members = BoardMemberSerializer(many=True, read_only=True)
     tasks = TaskSerializer(many=True, read_only=True)
@@ -173,6 +189,8 @@ class BoardDetailSerializer(serializers.ModelSerializer):
 
 
 class BoardUpdateResponseSerializer(serializers.ModelSerializer):
+    """Return owner and member details after a board update."""
+
     owner_data = BoardMemberSerializer(source="owner", read_only=True)
     members_data = BoardMemberSerializer(
         source="members",
@@ -186,6 +204,8 @@ class BoardUpdateResponseSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
+    """Accept comment content and return its author and creation time."""
+
     author = serializers.CharField(
         source="author.profile.fullname",
         read_only=True,

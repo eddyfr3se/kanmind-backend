@@ -437,8 +437,22 @@ unchanged; these formatting edits were made after the installation check.
 The structure and reviewed API code follow the required separation of models,
 serializers, views, permissions and URLs. A scan of versioned Python files found
 no functions or methods exceeding 14 physical lines, no debug `print()` calls,
-and no `fields = "__all__"`. The full submission checklist, official Academy
-PM tests and remaining frontend checks have not been completed.
+and no `fields = "__all__"`.
+
+The current school checklist was read in Google Docs and compared with the
+project structure, models, serializers, views, permissions, URLs and recorded
+test results. Short class docstrings were added to the application models and
+API classes. The 38 functions and methods have at most 13 physical lines.
+`pycodestyle` 2.15.0 reported no violations across the versioned Python files
+in both apps, `core` and `manage.py`. It was installed temporarily outside the
+project and is not a runtime dependency. A redundant import-group blank line
+was removed. Syntax tree comparisons confirmed that these documentation and
+formatting changes did not alter executable logic.
+
+The checklist review does not establish full API acceptance. The final endpoint
+contract comparison, official Academy PM result and remaining frontend checks
+are still open. A fresh GitHub clone and interactive superuser prompts were
+not exercised in the installation check.
 
 ## Development diary
 
@@ -630,6 +644,13 @@ describe the rebuilt implementation; the earlier repository history is retained.
 - Reviewed app structure, API responsibilities and method lengths.
 - Removed unused imports and scaffold comments and wrapped long settings and
   migration lines, verifying unchanged Python definitions for formatting edits.
+- Read the current school checklist and compared its requirements with the
+  implementation and recorded test evidence.
+- Added short class docstrings to models, serializers, views and permissions.
+- Checked all 38 functions and methods against the 14-line limit; the longest
+  has 13 lines. Ran pycodestyle successfully with no violations.
+- Verified that documentation and import-spacing changes left executable
+  logic unchanged; no new API test run was performed for these edits.
 - Remaining work: finish the full submission checklist, official Academy PM
   tests and remaining frontend checks. Interactive superuser creation and the
   backend clone commands have not been executed in this installation check.

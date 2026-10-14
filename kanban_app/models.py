@@ -3,6 +3,8 @@ from django.db import models
 
 
 class Board(models.Model):
+    """Store a project board with its owner and selected members."""
+
     title = models.CharField(max_length=255)
     owner = models.ForeignKey(
         User,
@@ -20,6 +22,8 @@ class Board(models.Model):
 
 
 class Task(models.Model):
+    """Store a board task, its creator, assignments and progress."""
+
     STATUS_CHOICES = [
         ("to-do", "To do"),
         ("in-progress", "In progress"),
@@ -67,6 +71,8 @@ class Task(models.Model):
 
 
 class Comment(models.Model):
+    """Store a task comment with its author and creation time."""
+
     task = models.ForeignKey(
         Task,
         on_delete=models.CASCADE,

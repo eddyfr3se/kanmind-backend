@@ -3,6 +3,8 @@ from django.db import models
 
 
 class UserProfile(models.Model):
+    """Store the full name associated with a Django user account."""
+
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
