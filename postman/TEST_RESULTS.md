@@ -71,13 +71,84 @@ Other installations must supply their own role accounts and IDs; this is not a
 zero-configuration test of a fresh database. The sanitized export itself has
 not been reimported with a different installation's accounts.
 
+## Day 12 board response correction - 14 October 2026
+
+The official board-detail response example omits `board` inside nested tasks.
+A separate BoardTaskSerializer now returns those documented fields, while
+personal task lists retain the board ID. Request 067's exact-key assertion was
+updated and saved in the Postman app and the public collection file.
+
+Targeted app requests passed: board details returned HTTP 200 with three
+passing assertions; assigned-to-me and reviewing each returned HTTP 200 with
+five passing assertions, including documented task and user fields.
+
+The full collection was then rerun in the Postman desktop app with explicit
+approval for its new disposable fixtures and cleanup:
+
+| Requests | Assertions | Passed | Failed | Skipped | Execution errors |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 172 | 387 | 387 | 0 | 0 | 0 |
+
+Cleanup checks confirmed deletion of the new fixture boards (IDs 13 and 14),
+task/comment cascades and absence of both boards from the final owner list.
+The results were observed in the app; this is not an official Academy PM run.
+
 ## Remaining acceptance work
+
+### Additional Task DELETE ID checks
+
+Four authenticated DELETE requests were sent through the Postman desktop app
+using the existing missing-task request with temporary URL substitutions:
+
+| Task ID | Observed status | Interpretation |
+| --- | ---: | --- |
+| `abc` | 404 | Noninteger path does not match the integer URL converter. |
+| `-1` | 404 | Negative path does not match the integer URL converter. |
+| `1.5` | 404 | Decimal path does not match the integer URL converter. |
+| `0` | 404 | Numeric path matches, but the task does not exist. |
+
+The documentation lists HTTP 400 for a malformed Task DELETE ID. The first
+three cases therefore expose a contract discrepancy with the current routing.
+They are additional exploratory checks, outside the earlier passing 172-request
+run. No valid task ID was used. The template's original URL was restored and
+its test script was not changed. These observations were made before the
+following routing correction.
+
+### Task DELETE ID correction and retest
+
+The task detail route now accepts a string ID. For DELETE, the view rejects
+IDs that do not consist exclusively of ASCII digits with HTTP 400 before
+looking up the object. Numeric missing IDs still return HTTP 404.
+
+Six authenticated requests were sent through the Postman desktop app with
+temporary assertions for status and a controlled JSON error object:
+
+| Task ID | Expected and observed status | Assertions |
+| --- | ---: | --- |
+| `abc` | 400 | 2 passed |
+| `-1` | 400 | 2 passed |
+| `1.5` | 400 | 2 passed |
+| `1.0` | 400 | 2 passed |
+| `0` | 404 | 2 passed |
+| `999999991` | 404 | 2 passed |
+
+All 12 assertions passed. No existing task was deleted. The request template's
+original URL and script were restored and saved.
+
+After the ID-validation correction, the full collection was rerun in the
+Postman desktop app: 172 requests and 387 assertions, all 387 passed, with
+zero failed or skipped assertions and zero execution errors. The cleanup
+requests removed the newly created fixture boards (IDs 15 and 16), their tasks
+and comments. The final owner-list assertion confirmed both boards were absent.
+The malformed-ID cases above remain separate targeted checks; they are not
+included in the 172-request collection. Official Academy PM tests remain open.
 
 - The official Academy PM collection has not been run; the required official
   95% coverage result is not established by these 387 assertions.
 - The separate frontend display issue and remaining frontend checks described
   in the main README remain open.
-- Clean-checkout installation and full submission checklist checks remain open.
+- Installation from a committed archive was checked on Day 12. A fresh GitHub
+  clone, interactive superuser prompts and final submission review remain open.
 - Postman offered the Runner results JSON export only with a paid upgrade in
   this session. This file records the results observed in the app; it is not
   an exported Runner report. The successful run remains in Postman's run history.

@@ -131,6 +131,15 @@ class TaskUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated, CanEditOrDeleteTask]
     http_method_names = ["patch", "delete", "options"]
 
+    def get_object(self):
+        task_id = self.kwargs["pk"]
+        if self.request.method == "DELETE":
+            if not task_id.isascii() or not task_id.isdecimal():
+                raise serializers.ValidationError({
+                    "task_id": "A task ID must contain only digits."
+                })
+        return super().get_object()
+
     def update(self, request, *args, **kwargs):
         task = self.get_object()
         serializer = self.get_serializer(

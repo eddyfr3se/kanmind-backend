@@ -49,7 +49,7 @@ Board retrieval, partial updates, and deletion are implemented at
 Task updates and deletion are implemented at `/api/tasks/{task_id}/`.
 Personal task lists are implemented at `GET /api/tasks/assigned-to-me/` and
 `GET /api/tasks/reviewing/`. Board task counters use actual task data.
-Days 1–11 are documented below, including implementation, frontend checks
+Days 1–12 are documented below, including implementation, frontend checks
 and a repeatable Postman regression run. Comments can be
 listed and created at `/api/tasks/{task_id}/comments/` and deleted at
 `/api/tasks/{task_id}/comments/{comment_id}/`. Task comment counts use actual
@@ -442,17 +442,35 @@ and no `fields = "__all__"`.
 The current school checklist was read in Google Docs and compared with the
 project structure, models, serializers, views, permissions, URLs and recorded
 test results. Short class docstrings were added to the application models and
-API classes. The 38 functions and methods have at most 13 physical lines.
+API classes. At that review stage, the 38 functions and methods had at most 13 physical
+lines. The subsequent task-ID check adds one short method.
 `pycodestyle` 2.15.0 reported no violations across the versioned Python files
 in both apps, `core` and `manage.py`. It was installed temporarily outside the
 project and is not a runtime dependency. A redundant import-group blank line
 was removed. Syntax tree comparisons confirmed that these documentation and
 formatting changes did not alter executable logic.
 
-The checklist review does not establish full API acceptance. The final endpoint
-contract comparison, official Academy PM result and remaining frontend checks
-are still open. A fresh GitHub clone and interactive superuser prompts were
-not exercised in the installation check.
+All 16 operations were compared with the current endpoint documentation in the
+browser. Two discrepancies were corrected: board-detail tasks now use a separate
+serializer without the extra `board` field, and malformed Task DELETE IDs return
+HTTP 400 rather than a routing 404. Numeric missing IDs still return 404. The
+assigned-to-me filter follows the endpoint description and permission text;
+its status-code explanation inconsistently mentions reviewers as well.
+
+Targeted Postman app checks passed three board-detail assertions and five
+assertions for each personal list. Six task-ID requests passed all 12 status
+and JSON-error assertions. After both corrections, the full Postman desktop
+Collection Runner run passed all 387 assertions across 172 requests, with no
+failures, skipped assertions or execution errors. Approved new fixture boards,
+tasks and comments were removed, and the final list confirmed their absence.
+Request 067 was updated in the app and the public collection to match the
+nested task fields. The malformed-ID checks are separate from that collection.
+Details are recorded in [TEST_RESULTS.md](postman/TEST_RESULTS.md).
+
+Day 12's code review, documented installation check and API comparison are
+complete. This does not establish full API acceptance: the official Academy
+PM result and remaining frontend checks are still open. A fresh GitHub clone
+and interactive superuser prompts were not exercised in the installation check.
 
 ## Development diary
 
@@ -651,9 +669,16 @@ describe the rebuilt implementation; the earlier repository history is retained.
   has 13 lines. Ran pycodestyle successfully with no violations.
 - Verified that documentation and import-spacing changes left executable
   logic unchanged; no new API test run was performed for these edits.
-- Remaining work: finish the full submission checklist, official Academy PM
-  tests and remaining frontend checks. Interactive superuser creation and the
-  backend clone commands have not been executed in this installation check.
+- Compared all 16 operations with the current official endpoint documentation.
+- Added a separate nested task serializer for board details and updated request
+  067's exact-field assertion in the Postman app and public collection.
+- Corrected malformed Task DELETE IDs to return 400 while preserving 404 for
+  numeric missing IDs; six targeted requests passed all 12 assertions.
+- Repeated the complete Postman app collection after both corrections: 172
+  requests and 387 assertions, all passed, with approved fixture cleanup.
+- Remaining work: official Academy PM tests, remaining frontend checks and final
+  submission review. Interactive superuser prompts and a fresh GitHub clone
+  remain untested; installation was checked from a committed archive.
 
 ## Installation
 

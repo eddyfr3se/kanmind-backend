@@ -176,12 +176,30 @@ class TaskUpdateResponseSerializer(TaskSerializer):
         ]
 
 
+class BoardTaskSerializer(TaskSerializer):
+    """Return nested task details without repeating the enclosing board ID."""
+
+    class Meta:
+        model = Task
+        fields = [
+            "id",
+            "title",
+            "description",
+            "status",
+            "priority",
+            "assignee",
+            "reviewer",
+            "due_date",
+            "comments_count",
+        ]
+
+
 class BoardDetailSerializer(serializers.ModelSerializer):
     """Return a board with its members and tasks."""
 
     owner_id = serializers.IntegerField(read_only=True)
     members = BoardMemberSerializer(many=True, read_only=True)
-    tasks = TaskSerializer(many=True, read_only=True)
+    tasks = BoardTaskSerializer(many=True, read_only=True)
 
     class Meta:
         model = Board

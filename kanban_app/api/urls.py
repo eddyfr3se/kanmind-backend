@@ -35,7 +35,7 @@ urlpatterns = [
         name="task-comment-delete",
     ),
     path(
-        "tasks/<int:pk>/",
+        "tasks/<str:pk>/",
         TaskUpdateDeleteView.as_view(),
         name="task-update-delete",
     ),
