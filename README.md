@@ -413,6 +413,33 @@ explain the required local accounts and fixture cleanup. These are project
 checks, not the official Academy PM suite, and do not establish its required
 95% coverage result.
 
+### Day 12 progress
+
+Installation was checked in a separate temporary directory using an archive
+of the committed backend and the updated README. A fresh Python 3.14.7 virtual
+environment installed all pinned dependencies successfully. A new local secret
+key and separate SQLite database were used; the existing project database was
+not changed. All migrations applied, Django's system check passed, no pending
+model changes were detected, and `pip check` found no broken requirements.
+
+The test server started on port 8012 to avoid the existing backend on 8001.
+A temporary superuser was created with `createsuperuser --noinput` and logged
+in through the browser. Board, task and comment administration list pages
+opened successfully. The interactive superuser prompts and a fresh GitHub
+clone were not tested. The temporary server was stopped afterward.
+
+The README now includes backend clone and directory-change commands. Unused
+imports and scaffold comments were removed from five otherwise empty Django
+files. Long lines in settings and four migrations were wrapped. Python syntax
+tree comparisons confirmed that the settings and migration definitions stayed
+unchanged; these formatting edits were made after the installation check.
+
+The structure and reviewed API code follow the required separation of models,
+serializers, views, permissions and URLs. A scan of versioned Python files found
+no functions or methods exceeding 14 physical lines, no debug `print()` calls,
+and no `fields = "__all__"`. The full submission checklist, official Academy
+PM tests and remaining frontend checks have not been completed.
+
 ## Development diary
 
 The entries below summarize the completed learning stages. Day numbers refer
@@ -591,13 +618,31 @@ describe the rebuilt implementation; the earlier repository history is retained.
 - Remaining work: clean-checkout installation, the full school checklist,
   official PM acceptance tests and the remaining frontend checks below.
 
+### Day 12 - Installation and code review
+
+- Added backend download and directory-change commands to the installation guide.
+- Installed the committed backend in a separate temporary environment and applied
+  all migrations to a fresh SQLite database, preserving the existing database.
+- Checked dependencies, Django configuration and pending model changes.
+- Started the temporary server, created a test superuser without interactive
+  prompts, and opened the board, task and comment admin lists in the browser.
+- Stopped the temporary server after the checks.
+- Reviewed app structure, API responsibilities and method lengths.
+- Removed unused imports and scaffold comments and wrapped long settings and
+  migration lines, verifying unchanged Python definitions for formatting edits.
+- Remaining work: finish the full submission checklist, official Academy PM
+  tests and remaining frontend checks. Interactive superuser creation and the
+  backend clone commands have not been executed in this installation check.
+
 ## Installation
 
 The local setup uses Python 3.14, Django, Django REST Framework,
 django-cors-headers, and SQLite. Dependency versions are in `requirements.txt`.
-From a fresh checkout on macOS or Linux:
+Clone the backend and install it on macOS or Linux:
 
 ```bash
+git clone https://github.com/eddyfr3se/kanmind-backend.git
+cd kanmind-backend
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
@@ -740,8 +785,9 @@ board detail task lists, task PATCH, task DELETE, personal task lists, and actua
 board counters are implemented. Comment operations and actual comment counts
 are implemented. Task/comment and board/task/comment cascade deletion were
 checked on disposable local data. The remaining frontend checks,
-the official PM acceptance suite, full school checklist and a clean-checkout
-installation test remain outstanding; this project is not yet declared ready
+the official PM acceptance suite and the full school checklist remain
+outstanding. Installation from a committed archive was checked on Day 12;
+a fresh GitHub clone and interactive superuser creation remain untested; this project is not yet declared ready
 for submission.
 Global API authentication uses
 `Authorization: Token <token>`; registration and login allow unauthenticated
