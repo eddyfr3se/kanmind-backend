@@ -49,7 +49,8 @@ Board retrieval, partial updates, and deletion are implemented at
 Task updates and deletion are implemented at `/api/tasks/{task_id}/`.
 Personal task lists are implemented at `GET /api/tasks/assigned-to-me/` and
 `GET /api/tasks/reviewing/`. Board task counters use actual task data.
-Days 1–9 are implemented and checked as described below. Comments can be
+Days 1–11 are documented below, including implementation, frontend checks
+and a repeatable Postman regression run. Comments can be
 listed and created at `/api/tasks/{task_id}/comments/` and deleted at
 `/api/tasks/{task_id}/comments/{comment_id}/`. Task comment counts use actual
 comment data. All 16 planned API operations are implemented. The central
@@ -253,7 +254,8 @@ board-change validation, and owner deletion. Cases were executed by changing
 request values; not every case has a separate saved request. Successful update
 and deletion templates use `task_id` and `disposable_task_id` placeholders that
 must be filled with appropriate local IDs before running. The requests are
-saved locally; no collection export or official test result is included.
+saved locally. No export was included at that stage; the separate Day 11
+regression collection is now included. Official PM results remain outstanding.
 
 Day 7 updates and deletion are implemented and manually checked. Personal task
 lists and actual board counters followed on Day 8.
@@ -342,8 +344,9 @@ Five request templates are saved in the local Postman collection. Cases were
 sent individually by changing request values, not through Collection Runner;
 not every case has a separate request. Create/delete templates now use
 `comment_task_id` and `comment_id` collection variables. This final variable
-configuration was saved after cleanup and has not been rerun. No collection
-export or official Academy PM result is included. Postman was restarted after
+configuration was saved after cleanup and was not rerun at that stage.
+Day 11 uses a separate exported regression collection; the official Academy
+PM suite remains untested. Postman was restarted after
 a duplicate-request UI action failed; no backend fix was needed during testing.
 
 ### Day 10 progress
@@ -383,6 +386,32 @@ Disposable board, task and comment data was removed with the user's approval;
 the original boards and tasks remained. Django's system check and the Git
 whitespace check passed. These results do not establish official PM coverage.
 The frontend limitations and remaining acceptance checks are listed below.
+
+### Day 11 progress
+
+A separate regression collection was built and run in the Postman desktop
+app's local Collection Runner on 14 October 2026. The complete repeat run
+executed **172 requests and 387 assertions: 387 passed, 0 failed, 0 skipped,
+and 0 execution errors**.
+
+The checks cover authentication, validation, board visibility and counters,
+task assignments and partial updates, separate personal lists, comments,
+role-specific permissions, missing objects and cascade deletion. Newly created
+disposable fixtures were used for membership changes and deletion and removed
+at the end. Successful registration remains covered by the Day 10 frontend
+check; the Runner checks registration errors using existing fictional accounts.
+
+An initial assertion expected an object for a missing-board error, while the
+backend returned a controlled HTTP 400 JSON list. The assertion was corrected,
+saved and rerun before the successful full run. No backend change was needed.
+
+The [regression collection](postman/kanmind-regression.postman_collection.json)
+and [empty environment example](postman/kanmind-local.postman_environment.example.json)
+are included without actual passwords, tokens or captured runtime IDs.
+[Recorded results and reproduction instructions](postman/TEST_RESULTS.md)
+explain the required local accounts and fixture cleanup. These are project
+checks, not the official Academy PM suite, and do not establish its required
+95% coverage result.
 
 ## Development diary
 
@@ -545,6 +574,23 @@ describe the rebuilt implementation; the earlier repository history is retained.
 - Remaining follow-up: repeatable Collection Runner coverage, collection export,
   the frontend display issue below, official PM tests and clean installation.
 
+### Day 11 - Repeatable Postman regression tests
+
+- Built a separate collection with 172 requests and post-response assertions.
+- Configured a private local environment for existing fictional role accounts.
+- Checked validation, response fields, counters and distinct permission rules
+  through the Postman desktop app's Collection Runner.
+- Corrected one test assertion for a controlled missing-board error response;
+  no backend source change was required.
+- Completed a full repeat run with all 387 assertions passing and no execution
+  errors, skipped assertions or failed assertions.
+- Removed the new disposable fixtures through the approved cleanup requests.
+- Exported the collection through the app and cleared credentials, runtime
+  values and public export metadata from the repository copy.
+- Added an empty environment example and recorded actual results and setup steps.
+- Remaining work: clean-checkout installation, the full school checklist,
+  official PM acceptance tests and the remaining frontend checks below.
+
 ## Installation
 
 The local setup uses Python 3.14, Django, Django REST Framework,
@@ -672,10 +718,14 @@ ID in `comment_id` for deletion. Use separate authors, other members, owners
 and outsiders. Adapt fixture IDs and expected counts, use disposable data for
 deletion/cascade checks, and rerun the final variable-based templates before
 using them in an automated collection run.
-The current Postman requests are saved in the local workspace collection;
-an updated collection export is not yet included in this repository.
-The earlier automated tests were removed during the rebuild. The official
-Academy Postman suite has not been run against this version.
+The historical templates above remain local. For a repeatable run, import the
+separate Day 11 [regression collection](postman/kanmind-regression.postman_collection.json)
+and [environment example](postman/kanmind-local.postman_environment.example.json).
+Follow the account setup, saved request order and disposable-fixture cleanup
+instructions in [TEST_RESULTS.md](postman/TEST_RESULTS.md). The full local run
+passed all 387 assertions. The sanitized export has not been reimported with
+a different installation's accounts. The official Academy Postman suite has
+not been run against this version.
 
 The central frontend workflows were checked in Safari on Day 10 as described
 above. One display issue remains: after changing a task's status in its detail
@@ -689,8 +739,8 @@ This is a local development setup with `DEBUG = True`. Task creation and
 board detail task lists, task PATCH, task DELETE, personal task lists, and actual
 board counters are implemented. Comment operations and actual comment counts
 are implemented. Task/comment and board/task/comment cascade deletion were
-checked on disposable local data. The remaining frontend checks, repeatable
-collection runs, the official PM acceptance suite and a clean-checkout
+checked on disposable local data. The remaining frontend checks,
+the official PM acceptance suite, full school checklist and a clean-checkout
 installation test remain outstanding; this project is not yet declared ready
 for submission.
 Global API authentication uses
