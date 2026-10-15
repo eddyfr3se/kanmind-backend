@@ -149,8 +149,10 @@ included in the 172-request collection. Official Academy PM tests remain open.
   main README. They are not additional Postman assertions. The local frontend
   status-display issue was corrected; denied board access still shows an empty
   frontend placeholder.
-- Installation from a committed archive was checked on Day 12. A fresh GitHub
-  clone, interactive superuser prompts and final submission review remain open.
+- Installation from a fresh GitHub clone was checked on Day 14. Package
+  installation, migrations, interactive admin creation and admin login worked.
+  The temporary server was stopped after the check. This was not a new Postman
+  run. The project link still needs to be submitted.
 - Postman offered the Runner results JSON export only with a paid upgrade in
   this session. This file records the results observed in the app; it is not
   an exported Runner report. The successful run remains in Postman's run history.
