@@ -49,7 +49,7 @@ Board retrieval, partial updates, and deletion are implemented at
 Task updates and deletion are implemented at `/api/tasks/{task_id}/`.
 Personal task lists are implemented at `GET /api/tasks/assigned-to-me/` and
 `GET /api/tasks/reviewing/`. Board task counters use actual task data.
-Days 1–13 are documented below, including implementation, frontend checks
+Days 1–14 are documented below, including implementation, frontend checks
 and a repeatable Postman regression run. Comments can be
 listed and created at `/api/tasks/{task_id}/comments/` and deleted at
 `/api/tasks/{task_id}/comments/{comment_id}/`. Task comment counts use actual
@@ -497,6 +497,29 @@ Academy project and submission pages. This does not prove that no such suite
 exists. The official 95% acceptance result remains unverified. These Safari
 checks are separate from the recorded Postman collection results.
 
+### Day 14 progress
+
+The backend was cloned from GitHub into a separate temporary folder. The
+README steps were used to create a virtual environment, install the packages,
+set a local secret key and run the migrations on a new SQLite database.
+All migrations worked. Django reported no problems, and the package check
+found no missing or conflicting dependencies.
+
+A test admin user was created with the interactive `createsuperuser` command.
+The server started on port 8014, and login to the admin page worked in Safari.
+The test server was stopped afterwards. The existing project and database
+were kept unchanged. This was an installation check, not a new API test run.
+
+The tracked repository files were also checked. The local `.env`, database,
+virtual environment and cache files are excluded from Git.
+No passwords or tokens were found in the checked public files. The README,
+requirements and migrations are included. The frontend is kept separately.
+The local commit matched the main branch on GitHub at the time of this check.
+
+The Academy's 95% PM-test result has not been confirmed. The local Postman
+results do not replace that result. The final repository link still needs to
+be submitted through the Academy's submission process.
+
 ## Development diary
 
 The entries below summarize the completed learning stages. Day numbers refer
@@ -720,6 +743,18 @@ describe the rebuilt implementation; the earlier repository history is retained.
 - Remaining work: official PM acceptance, final submission review, and the
   previously untested fresh GitHub clone and interactive superuser prompts.
 
+### Day 14 - Installation and repository check
+
+- Cloned the backend from GitHub into a separate temporary folder.
+- Followed the README to install the packages and set up a new database.
+- Ran all migrations and the Django and package checks successfully.
+- Created a test admin user through the terminal prompts and logged in using
+  Safari. Stopped the temporary server after the check.
+- Checked the Git exclusions, public files and required project files.
+- Confirmed that the local commit matched GitHub's main branch.
+- Updated this README with the completed checks. No new Postman run was made.
+- Still open: the Academy's PM-test assessment and submitting the project link.
+
 ## Installation
 
 The local setup uses Python 3.14, Django, Django REST Framework,
@@ -887,10 +922,11 @@ This is a local development setup with `DEBUG = True`. Task creation and
 board detail task lists, task PATCH, task DELETE, personal task lists, and actual
 board counters are implemented. Comment operations and actual comment counts
 are implemented. Task/comment and board/task/comment cascade deletion were
-checked on disposable local data. The official PM acceptance suite and final
-submission review remain outstanding. Installation from a committed archive
-was checked on Day 12; a fresh GitHub clone and interactive superuser creation
-remain untested. This project is not yet declared ready for submission.
+checked on disposable local data. Installation from a fresh GitHub clone was
+checked on Day 14. The README setup, migrations, interactive admin creation
+and admin login worked. The separate temporary server was stopped afterwards.
+The Academy's PM-test result is still unconfirmed, and the project link has
+not yet been submitted. No new API test run was made for the installation check.
 Global API authentication uses
 `Authorization: Token <token>`; registration and login allow unauthenticated
 requests.
