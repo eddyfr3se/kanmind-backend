@@ -520,6 +520,19 @@ The Academy's 95% PM-test result has not been confirmed. The local Postman
 results do not replace that result. The final repository link still needs to
 be submitted through the Academy's submission process.
 
+A final checklist review found two small issues. Login and email lookup used
+`user.profile.fullname` directly, which fails for a Django user created without
+a UserProfile. A shared name helper now returns the profile name when available,
+otherwise the Django full name or username. Nested user data and comment author
+names use the same helper.
+
+Board creation now requires the `members` field. An empty list is allowed.
+Board PATCH still accepts a title without a members list and keeps the existing
+members. A targeted Postman app run checked these changes with 14 requests and
+27 assertions; all passed. Its new board, task and comment were removed by the
+approved cleanup requests. This was a separate run, not a repeat of the full
+172-request collection.
+
 ## Development diary
 
 The entries below summarize the completed learning stages. Day numbers refer
@@ -752,7 +765,11 @@ describe the rebuilt implementation; the earlier repository history is retained.
   Safari. Stopped the temporary server after the check.
 - Checked the Git exclusions, public files and required project files.
 - Confirmed that the local commit matched GitHub's main branch.
-- Updated this README with the completed checks. No new Postman run was made.
+- Recorded the installation and repository checks separately from API tests.
+- Corrected name output for users without a profile and required `members`
+  when creating a board. Title-only PATCH requests still keep the members.
+- Ran 14 targeted requests in the Postman app: all 27 assertions passed.
+- Removed the new board, task and comment through the approved test cleanup.
 - Still open: the Academy's PM-test assessment and submitting the project link.
 
 ## Installation

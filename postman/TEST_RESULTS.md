@@ -156,3 +156,33 @@ included in the 172-request collection. Official Academy PM tests remain open.
 - Postman offered the Runner results JSON export only with a paid upgrade in
   this session. This file records the results observed in the app; it is not
   an exported Runner report. The successful run remains in Postman's run history.
+
+## Day 14 targeted fixes - 15 October 2026
+
+A final code review found direct profile access in login and email lookup.
+Django admin users can exist without a UserProfile. A shared name helper now
+uses the profile name, Django full name or username. Nested user responses
+and comment author names use the same helper.
+
+Board creation now explicitly requires a `members` list. Empty lists remain
+valid. Partial board updates still preserve members when the field is omitted.
+
+The separate local collection `KanMind Day 14 targeted fixes` was run in the
+Postman desktop app using 14 requests and 27 assertions:
+
+- Existing profile login: 200, original full name unchanged.
+- Login and email lookup without a profile: 200, username returned as the name.
+- Board creation without members: 400 with a members field error.
+- Board creation with an empty members list: 201.
+- Member changes and title-only PATCH: 200, expected member data preserved.
+- Board details and assigned task data: names returned as text without a profile.
+- Comment creation and listing: author name returned as text without a profile.
+- Approved fixture board deletion: empty 204 response, then 404 on retrieval.
+
+All 27 assertions passed, with zero failed or skipped assertions and zero
+execution errors. The new board (ID 18), its task and comment were removed.
+The fictional account without a profile remains available locally for repeats.
+It was created as test setup through Django, not through the registration API.
+The run used temporary variables without keeping their values after the run.
+The 172-request collection was not rerun for these fixes; its earlier result
+remains recorded above. No official Academy PM result is claimed.

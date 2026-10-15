@@ -9,6 +9,7 @@ from auth_app.api.serializers import (
     EmailCheckSerializer,
     LoginSerializer,
     RegistrationSerializer,
+    get_user_fullname,
 )
 
 
@@ -24,7 +25,7 @@ class RegistrationView(APIView):
         token, _ = Token.objects.get_or_create(user=user)
         data = {
             "token": token.key,
-            "fullname": user.profile.fullname,
+            "fullname": get_user_fullname(user),
             "email": user.email,
             "user_id": user.id,
         }
@@ -44,7 +45,7 @@ class LoginView(APIView):
         token, _ = Token.objects.get_or_create(user=user)
         data = {
             "token": token.key,
-            "fullname": user.profile.fullname,
+            "fullname": get_user_fullname(user),
             "email": user.email,
             "user_id": user.id,
         }
@@ -73,5 +74,5 @@ class EmailCheckView(APIView):
         return {
             "id": user.id,
             "email": user.email,
-            "fullname": user.profile.fullname,
+            "fullname": get_user_fullname(user),
         }

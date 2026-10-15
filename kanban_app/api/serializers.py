@@ -1,11 +1,18 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
+from auth_app.api.serializers import get_user_fullname
 from kanban_app.models import Board, Comment, Task
 
 
 class BoardCreateSerializer(serializers.ModelSerializer):
     """Validate titles and member lists for board creation and updates."""
+
+    members = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+        many=True,
+        required=True,
+    )
 
     class Meta:
         model = Board
@@ -49,14 +56,14 @@ class BoardListSerializer(serializers.ModelSerializer):
 class BoardMemberSerializer(serializers.ModelSerializer):
     """Return user IDs, emails and full names for nested API responses."""
 
-    fullname = serializers.CharField(
-        source="profile.fullname",
-        read_only=True,
-    )
+    fullname = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = ["id", "email", "fullname"]
+
+    def get_fullname(self, obj):
+        return get_user_fullname(obj)
 
 
 class TaskSerializer(serializers.ModelSerializer):
@@ -224,12 +231,12 @@ class BoardUpdateResponseSerializer(serializers.ModelSerializer):
 class CommentSerializer(serializers.ModelSerializer):
     """Accept comment content and return its author and creation time."""
 
-    author = serializers.CharField(
-        source="author.profile.fullname",
-        read_only=True,
-    )
+    author = serializers.SerializerMethodField()
 
     class Meta:
         model = Comment
         fields = ["id", "created_at", "author", "content"]
         read_only_fields = ["id", "created_at"]
+
+    def get_author(self, obj):
+        return get_user_fullname(obj.author)

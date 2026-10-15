@@ -7,6 +7,14 @@ from rest_framework import serializers
 from auth_app.models import UserProfile
 
 
+def get_user_fullname(user):
+    """Return the profile name or a Django name for users without a profile."""
+    try:
+        return user.profile.fullname
+    except UserProfile.DoesNotExist:
+        return user.get_full_name() or user.username
+
+
 class RegistrationSerializer(serializers.ModelSerializer):
     """Validate registration data and create a user and full-name profile."""
 
